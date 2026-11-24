@@ -571,14 +571,15 @@ def run():
         # 16) 에셋 버전 / 서비스워커 네트워크 우선
         sw_txt = page.evaluate("fetch('sw.js').then(r => r.text())")
         html_txt = page.evaluate("fetch('index.html').then(r => r.text())")
-        log('에셋 버전 v=6', 'styles.css?v=6' in html_txt and 'app.js?v=6' in html_txt
-            and 'dict.js?v=6' in html_txt and 'dict-data.js?v=6' in html_txt,
+        log('에셋 버전 v=7 (영어 포함)', 'styles.css?v=7' in html_txt and 'app.js?v=7' in html_txt
+            and 'dict.js?v=7' in html_txt and 'dict-data.js?v=7' in html_txt
+            and 'eng.js?v=7' in html_txt and 'eng-data.js?v=7' in html_txt,
             'index.html 쿼리')
-        log('서비스워커 v6 · 네트워크 우선 · 오디오 동적 캐시',
-            "CACHE = 'harang-math-v6'" in sw_txt and 'styles.css?v=6' in sw_txt
+        log('서비스워커 v7 · 네트워크 우선 · 오디오 동적 캐시',
+            "CACHE = 'harang-math-v7'" in sw_txt and 'styles.css?v=7' in sw_txt
             and 'isShell(req.url)' in sw_txt and 'caches.match(req).then((cached) => cached' in sw_txt
-            and 'isDictAudio(req.url)' in sw_txt,
-            f"CACHE={'harang-math-v6' in sw_txt} shell={'isShell(req.url)' in sw_txt}")
+            and 'isDictAudio(req.url)' in sw_txt and 'eng\\.js' in sw_txt,
+            f"CACHE={'harang-math-v7' in sw_txt} shell={'isShell(req.url)' in sw_txt}")
 
         # 17) 수학 출제 비율 — 산수 80% / 1학년 2학기 개념 20%
         mix = page.evaluate("""() => {

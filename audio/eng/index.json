@@ -1,0 +1,382 @@
+{
+ "blank-1": {
+  "text": "cat",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-2": {
+  "text": "dog",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-3": {
+  "text": "pig",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-4": {
+  "text": "sun",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-5": {
+  "text": "bed",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-6": {
+  "text": "hat",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-7": {
+  "text": "box",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-8": {
+  "text": "cup",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-9": {
+  "text": "fish",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-10": {
+  "text": "milk",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-11": {
+  "text": "book",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-12": {
+  "text": "star",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-13": {
+  "text": "red",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-14": {
+  "text": "blue",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-15": {
+  "text": "kite",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "blank-16": {
+  "text": "tree",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-1": {
+  "text": "ay",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-2": {
+  "text": "B",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-3": {
+  "text": "C",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-4": {
+  "text": "D",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-5": {
+  "text": "ee",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-6": {
+  "text": "eff",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-7": {
+  "text": "G",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-8": {
+  "text": "H",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-9": {
+  "text": "K",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-10": {
+  "text": "M",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-11": {
+  "text": "S",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-12": {
+  "text": "T",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-13": {
+  "text": "apple",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-14": {
+  "text": "dog",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-15": {
+  "text": "milk",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-16": {
+  "text": "star",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-17": {
+  "text": "book",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-18": {
+  "text": "fish",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-19": {
+  "text": "moon",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "listen-20": {
+  "text": "bus",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-1": {
+  "text": "cat",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-2": {
+  "text": "dog",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-3": {
+  "text": "pig",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-4": {
+  "text": "duck",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-5": {
+  "text": "rabbit",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-6": {
+  "text": "tiger",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-7": {
+  "text": "monkey",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-8": {
+  "text": "apple",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-9": {
+  "text": "banana",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-10": {
+  "text": "grapes",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-11": {
+  "text": "strawberry",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-12": {
+  "text": "orange",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-13": {
+  "text": "watermelon",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-14": {
+  "text": "red",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-15": {
+  "text": "blue",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-16": {
+  "text": "yellow",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-17": {
+  "text": "green",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-18": {
+  "text": "pink",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-19": {
+  "text": "black",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-20": {
+  "text": "mother",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-21": {
+  "text": "father",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-22": {
+  "text": "sister",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-23": {
+  "text": "brother",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "pic-24": {
+  "text": "baby",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-1": {
+  "text": "Good morning!",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-2": {
+  "text": "Hello!",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-3": {
+  "text": "Thank you!",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-4": {
+  "text": "I am sorry.",
+  "size": 11808,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-5": {
+  "text": "I love you!",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-6": {
+  "text": "Good night!",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-7": {
+  "text": "Good bye!",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-8": {
+  "text": "See you!",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-9": {
+  "text": "How are you?",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-10": {
+  "text": "I am fine, thank you.",
+  "size": 16128,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-11": {
+  "text": "My name is Harang.",
+  "size": 13536,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-12": {
+  "text": "Nice to meet you!",
+  "size": 12528,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-13": {
+  "text": "Happy birthday!",
+  "size": 12240,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-14": {
+  "text": "Let us go!",
+  "size": 11232,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-15": {
+  "text": "I am hungry.",
+  "size": 11952,
+  "voice": "en-US-AnaNeural"
+ },
+ "talk-16": {
+  "text": "I am happy!",
+  "size": 11664,
+  "voice": "en-US-AnaNeural"
+ }
+}

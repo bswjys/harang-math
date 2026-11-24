@@ -1,12 +1,14 @@
 /* 공부하랑핑 service worker — 오프라인에서도 열려요 */
-const CACHE = 'harang-math-v6';
+const CACHE = 'harang-math-v7';
 const ASSETS = [
   './',
   'index.html',
-  'styles.css?v=6',
-  'app.js?v=6',
-  'dict-data.js?v=6',
-  'dict.js?v=6',
+  'styles.css?v=7',
+  'app.js?v=7',
+  'dict-data.js?v=7',
+  'dict.js?v=7',
+  'eng-data.js?v=7',
+  'eng.js?v=7',
   'fonts/HarangSans.woff',
   'manifest.webmanifest',
   'icons/icon-192.png',
@@ -16,7 +18,7 @@ const ASSETS = [
 ];
 
 /* 새 배포가 바로 보이도록 앱 껍데기(HTML/CSS/JS)는 네트워크 먼저, 실패하면 캐시 */
-const SHELL = [/\/$/, /\/index\.html$/, /\/app\.js$/, /\/dict\.js$/, /\/dict-data\.js$/, /\/styles\.css$/];
+const SHELL = [/\/$/, /\/index\.html$/, /\/app\.js$/, /\/dict\.js$/, /\/dict-data\.js$/, /\/eng\.js$/, /\/eng-data\.js$/, /\/styles\.css$/];
 function isShell(url) {
   try {
     const u = new URL(url);
@@ -25,11 +27,11 @@ function isShell(url) {
   } catch (e) { return false; }
 }
 
-/* 받아쓰기 MP3는 설치할 때 미리 받지 않고, 처음 들을 때 저장해 두었다가 다음부터 바로 씀 */
+/* 받아쓰기·영어 MP3는 설치할 때 미리 받지 않고, 처음 들을 때 저장해 두었다가 다음부터 바로 씀 */
 function isDictAudio(url) {
   try {
     const u = new URL(url);
-    return u.origin === self.location.origin && /\/audio\/dict\/[^/]+\.mp3$/.test(u.pathname);
+    return u.origin === self.location.origin && /\/audio\/(dict|eng)\/[^/]+\.mp3$/.test(u.pathname);
   } catch (e) { return false; }
 }
 

@@ -102,8 +102,9 @@ function defaultState() {
     bestCombo: 0,
     seenLevel: 0,
     subject: 'math',
-    subj: { math: { solved: 0, correct: 0 }, dict: { solved: 0, correct: 0 } },
-    dict: { byRound: {}, wrong: [], lastRound: 'r1' }
+    subj: { math: { solved: 0, correct: 0 }, dict: { solved: 0, correct: 0 }, eng: { solved: 0, correct: 0 } },
+    dict: { byRound: {}, wrong: [], lastRound: 'r1' },
+    eng: { byCourse: {}, wrong: [], lastCourse: 'pic' }
   };
 }
 
@@ -127,17 +128,17 @@ function loadState() {
           const r = s.byCat[k] || {};
           return { solved: a.solved + (Number(r.solved) || 0), correct: a.correct + (Number(r.correct) || 0) };
         }, { solved: 0, correct: 0 });
-        s.subj = { math: agg, dict: { solved: 0, correct: 0 } };
+        s.subj = { math: agg, dict: { solved: 0, correct: 0 }, eng: { solved: 0, correct: 0 } };
       } else {
-        s.subj = Object.assign({ math: { solved: 0, correct: 0 }, dict: { solved: 0, correct: 0 } }, saved.subj || {});
+        s.subj = Object.assign({ math: { solved: 0, correct: 0 }, dict: { solved: 0, correct: 0 }, eng: { solved: 0, correct: 0 } }, saved.subj || {});
       }
-      ['math', 'dict'].forEach((k) => {
+      ['math', 'dict', 'eng'].forEach((k) => {
         const r = s.subj[k] || (s.subj[k] = { solved: 0, correct: 0 });
         r.solved = Number(r.solved) || 0;
         r.correct = Number(r.correct) || 0;
       });
       if (!s.dict || typeof s.dict !== 'object') s.dict = { byRound: {}, wrong: [], lastRound: 'r1' };
-      if (s.subject !== 'dict') s.subject = 'math';
+      if (!['math', 'dict', 'eng'].includes(s.subject)) s.subject = 'math';
     }
   } catch (e) { /* 저장값이 깨져도 앱은 열려야 함 */ }
   if (s.today.date !== todayKey()) {
@@ -1603,12 +1604,14 @@ function renderReport() {
   const missionShown = Math.min(5, t.solved);
   const missionDone = t.solved >= 5;
 
-  /* 과목별(수학 / 받아쓰기) 기록은 따로 보여 줘요 */
-  const subj = state.subj || { math: { solved: 0, correct: 0 }, dict: { solved: 0, correct: 0 } };
+  /* 과목별(수학 / 받아쓰기 / 영어) 기록은 따로 보여 줘요 */
+  const subj = state.subj || { math: { solved: 0, correct: 0 }, dict: { solved: 0, correct: 0 }, eng: { solved: 0, correct: 0 } };
   const mS = subj.math || { solved: 0, correct: 0 };
   const dS = subj.dict || { solved: 0, correct: 0 };
+  const eS = subj.eng || { solved: 0, correct: 0 };
   const mP = pctOf(mS.correct, mS.solved);
   const dP = pctOf(dS.correct, dS.solved);
+  const eP = pctOf(eS.correct, eS.solved);
   const subjCards = `
     <div class="rep-subj">
       <div class="rep-subj-card math" data-subj="math">
@@ -1623,11 +1626,21 @@ function renderReport() {
         <b class="rs-rate">${dS.solved ? dP + '%' : '–'}</b>
         <span class="rs-foot">${dS.solved ? `${dS.solved}문장 중 ${dS.correct}개 정답` : '아직 안 했어요'}</span>
       </div>
+      <div class="rep-subj-card eng" data-subj="eng">
+        <span class="rs-emoji" aria-hidden="true">🔤</span>
+        <span class="rs-name">영어</span>
+        <b class="rs-rate">${eS.solved ? eP + '%' : '–'}</b>
+        <span class="rs-foot">${eS.solved ? `${eS.solved}문제 중 ${eS.correct}개 정답` : '아직 안 했어요'}</span>
+      </div>
     </div>`;
   const dictRows = (window.harangDict && typeof window.harangDict.reportRows === 'function')
     ? window.harangDict.reportRows()
     : '';
+  const engRows = (window.harangEng && typeof window.harangEng.reportRows === 'function')
+    ? window.harangEng.reportRows()
+    : '';
   const dictWrong = (state.dict && Array.isArray(state.dict.wrong)) ? state.dict.wrong.length : 0;
+  const engWrong = (state.eng && Array.isArray(state.eng.wrong)) ? state.eng.wrong.length : 0;
 
   const rows = CATEGORIES.map((c) => {
     const r = byCatGet(c.key);
@@ -1671,12 +1684,14 @@ function renderReport() {
     <div class="rep-grid">
       <div class="rep-stat"><span>누적 푼 문제</span><b>${tot.solved}문제</b></div>
       <div class="rep-stat"><span>누적 정답률</span><b>${tot.solved ? totalRate + '%' : '–'}</b></div>
-      <div class="rep-stat"><span>헷갈린 문제</span><b>${state.wrongList.length + dictWrong}개</b></div>
+      <div class="rep-stat"><span>헷갈린 문제</span><b>${state.wrongList.length + dictWrong + engWrong}개</b></div>
     </div>
     <h3 class="rep-h">🔢 수학 단원별</h3>
     <div class="rep-cats">${rows}</div>
     <h3 class="rep-h">✏️ 받아쓰기 회차별</h3>
     <div class="rep-cats rep-dict-cats">${dictRows}</div>
+    <h3 class="rep-h">🔤 영어 코스별</h3>
+    <div class="rep-cats rep-eng-cats">${engRows}</div>
     <div class="rep-summary">
       <p class="rep-good"><b>하랑이가 잘하는 것</b><span>${good}</span></p>
       <p class="rep-practice"><b>조금 더 연습하면 좋은 것</b><span>${practice}</span></p>
@@ -1899,23 +1914,28 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-/* ---------- 과목 탭 (🔢 수학 / ✏️ 받아쓰기) ---------- */
+/* ---------- 과목 탭 (🔢 수학 / ✏️ 받아쓰기 / 🔤 영어) ---------- */
+const SUBJECTS = ['math', 'dict', 'eng'];
+const PANE_OF = { math: 'mathPane', dict: 'dictPane', eng: 'engPane' };
+const TAB_OF = { math: 'tabMath', dict: 'tabDict', eng: 'tabEng' };
+
 function setSubject(name) {
-  const subj = name === 'dict' ? 'dict' : 'math';
-  const mathPane = $('mathPane');
-  const dictPane = $('dictPane');
-  if (!mathPane || !dictPane) return subj;
+  const subj = SUBJECTS.includes(name) ? name : 'math';
+  const panes = SUBJECTS.map((k) => ({ k, el: $(PANE_OF[k]) }));
+  if (panes.some((p) => !p.el)) return subj;
   state.subject = subj;
   try { saveState(); } catch (e) {}
-  mathPane.hidden = subj !== 'math';
-  dictPane.hidden = subj !== 'dict';
-  const tm = $('tabMath');
-  const td = $('tabDict');
-  if (tm) { tm.classList.toggle('on', subj === 'math'); tm.setAttribute('aria-selected', subj === 'math' ? 'true' : 'false'); }
-  if (td) { td.classList.toggle('on', subj === 'dict'); td.setAttribute('aria-selected', subj === 'dict' ? 'true' : 'false'); }
+  panes.forEach((p) => { p.el.hidden = p.k !== subj; });
+  SUBJECTS.forEach((k) => {
+    const b = $(TAB_OF[k]);
+    if (!b) return;
+    b.classList.toggle('on', k === subj);
+    b.setAttribute('aria-selected', k === subj ? 'true' : 'false');
+  });
+  if (window.harangDict && window.harangDict.stop) window.harangDict.stop();
+  if (window.harangEng && window.harangEng.stop) window.harangEng.stop();
   if (subj === 'dict' && window.harangDict && window.harangDict.refresh) window.harangDict.refresh();
-  if (subj === 'dict' && window.harangDict && window.harangDict.stop) window.harangDict.stop();
-  else if (subj === 'math' && window.harangDict && window.harangDict.stop) window.harangDict.stop();
+  if (subj === 'eng' && window.harangEng && window.harangEng.refresh) window.harangEng.refresh();
   return subj;
 }
 
@@ -1999,11 +2019,12 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* 과목 탭 */
-['tabMath', 'tabDict'].forEach((id) => {
+['tabMath', 'tabDict', 'tabEng'].forEach((id) => {
   const b = $(id);
   if (!b) return;
+  const key = { tabMath: 'math', tabDict: 'dict', tabEng: 'eng' }[id];
   b.addEventListener('click', () => {
-    setSubject(id === 'tabDict' ? 'dict' : 'math');
+    setSubject(key);
     playSound('tap');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
@@ -2110,6 +2131,22 @@ if (new URLSearchParams(location.search).get('test') === '1') {
           width: el.querySelector('.rep-bar i').style.width
         }));
     },
+    reportEngBars() {
+      return [...ui.reportBody.querySelectorAll('.rep-cat')]
+        .filter((el) => el.dataset.course)
+        .map((el) => ({
+          course: el.dataset.course,
+          pct: el.querySelector('.rep-cat-head b').textContent,
+          foot: el.querySelector('.rep-cat-foot').textContent
+        }));
+    },
+    get repSubjCards() {
+      return [...ui.reportBody.querySelectorAll('.rep-subj-card')].map((el) => ({
+        subj: el.dataset.subj,
+        rate: el.querySelector('.rs-rate').textContent,
+        foot: el.querySelector('.rs-foot').textContent
+      }));
+    },
     reportDictBars() {
       return [...ui.reportBody.querySelectorAll('.rep-cat')]
         .filter((el) => el.dataset.round)
@@ -2158,7 +2195,7 @@ if (new URLSearchParams(location.search).get('test') === '1') {
     },
     get feedbackSub() { return ui.fbSub ? ui.fbSub.textContent : ''; },
     /* v4 과목 탭 */
-    subject(name) { const s = setSubject(name); return { subject: s, mathHidden: $('mathPane').hidden, dictHidden: $('dictPane').hidden }; },
+    subject(name) { const s = setSubject(name); return { subject: s, mathHidden: $('mathPane').hidden, dictHidden: $('dictPane').hidden, engHidden: $('engPane').hidden }; },
     get subj() { return JSON.parse(JSON.stringify(state.subj || {})); },
     makeQuestion
   };
