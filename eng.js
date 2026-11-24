@@ -709,13 +709,7 @@
     summary,
     reportRows,
     stop: () => { stopSpeak(); },
-    refresh: () => {
-      renderCourses();
-      renderReviewBtn();
-      renderStage();
-      /* 소리 듣고 찾기 코스는 화면에 들어오면 바로 한 번 들려줘요 */
-      if (curKey === 'listen' && !listenMode) setTimeout(() => { if (!listenMode) speak(false); }, 180);
-    },
+    refresh: () => { renderCourses(); renderReviewBtn(); renderStage(); },
     open: () => { if (window.openReport) window.openReport(); }
   };
 
