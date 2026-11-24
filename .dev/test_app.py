@@ -137,8 +137,11 @@ def run():
             seen.add(page.evaluate('window.__harang.current.type'))
         for i in range(120):
             if page.locator('.modal:not([hidden])').count():
-                # 100개 달성 팝업은 따로 검증하므로 여기서는 닫기
-                page.click('#wishCloseBtn')
+                # 100개 달성 팝업(요정)·소원 팝업은 따로 검증하므로 여기서는 닫기
+                if page.locator('#fairyModal:not([hidden])').count():
+                    page.click('#fairyClose')
+                elif page.locator('#wishCloseBtn').count():
+                    page.click('#wishCloseBtn')
                 page.wait_for_timeout(150)
             qtype = page.evaluate('window.__harang.current.type')
             if qtype not in seen:
@@ -207,7 +210,7 @@ def run():
         if page.locator('#wishModal:not([hidden])').count():
             page.click('#wishCloseBtn')
 
-        # 6) 100개 달성 → 소원 팝업
+        # 6) 감 100개 달성 → 요정 칭찬 팝업 → 소원 저장 → 감 0/100 리셋
         page.evaluate('window.__harang.setOrange(99)')
         page.evaluate('window.__harang.next()')
         page.wait_for_timeout(200)
@@ -215,40 +218,66 @@ def run():
             page.click('#wishCloseBtn')
             page.wait_for_timeout(150)
         page.evaluate('window.__harang.answerCorrect()')
-        page.wait_for_timeout(1500)
-        modal_open = page.locator('#wishModal:not([hidden])').count() > 0
+        page.wait_for_timeout(1600)
+        fairy = page.evaluate('window.__harang.fairy')
         lvl = page.inner_text('#levelName')
-        log('감100 소원 팝업', modal_open and lvl == '소원요정 하랑핑', f'칭호={lvl}')
+        log('감100 요정 칭찬 팝업', fairy['open'] and fairy['celebrate']
+            and '100개 다 모았어' in fairy['text'] and '잘했어요' in fairy['text']
+            and lvl == '소원요정 하랑핑',
+            f"칭호={lvl} / {fairy['text']}")
+        page.evaluate('window.__harang.clearFx()')
+        page.wait_for_timeout(120)
+        page.screenshot(path=os.path.join(SHOTS, '07-감100-요정칭찬.png'))
+        page.click('#fairyWishBtn')
+        page.wait_for_timeout(500)
+        modal_open = page.locator('#wishModal:not([hidden])').count() > 0
+        log('요정 → 소원 적기로 이어짐', modal_open and page.locator('#wishForm:not([hidden])').count() > 0, '')
         if modal_open:
-            page.wait_for_timeout(500)
-            shot(page, '07-감100-소원팝업', 600, clear=False)
+            page.evaluate('window.__harang.clearFx()')
+            page.wait_for_timeout(100)
+            shot(page, '08-감100-소원팝업', 400)
+            pre = page.evaluate("""() => ({t: __harang.state.totalOrange, s: __harang.state.today.solved,
+                c: __harang.state.combo, m: __harang.state.subj.math.solved})""")
             page.click('.wish-chip >> nth=0')
             page.wait_for_timeout(200)
             page.click('#wishSaveBtn')
-            page.wait_for_timeout(800)
+            page.wait_for_timeout(900)
             saved_text = page.inner_text('#wishSavedText')
             log('소원 저장', len(saved_text) > 3, saved_text)
-            shot(page, '08-소원저장-쿠폰함안내')
+            st = page.evaluate('window.__harang.state')
+            counter = page.inner_text('#orangeCount')
+            reset_view = page.evaluate("""() => ({
+                width: document.getElementById('progressBar').style.width,
+                level: document.getElementById('levelName').textContent
+            })""")
+            log('선물 생성 → 감 0/100 즉시 리셋', st['orange'] == 0 and counter == '0'
+                and reset_view['width'] == '0%' and st['journey'] == 2,
+                f"orange={st['orange']} journey={st['journey']} 칭호={reset_view['level']}")
+            log('리셋 뒤 누적 기록 유지', st['totalOrange'] == pre['t'] and st['today']['solved'] == pre['s']
+                and st['combo'] == pre['c'] and len(st['wishes']) == 1 and st['subj']['math']['solved'] == pre['m'],
+                f"totalOrange {pre['t']}->{st['totalOrange']} today {pre['s']}->{st['today']['solved']} combo {pre['c']}->{st['combo']} wishes={len(st['wishes'])}")
+            page.evaluate('window.__harang.clearFx()')
+            page.wait_for_timeout(100)
+            shot(page, '08b-선물생성-감리셋')
             page.click('#wishCloseBtn')
             page.wait_for_timeout(300)
 
-        # 7) 소원 쿠폰함 + 엄마아빠 확인 + 새 도전
+        # 7) 소원 쿠폰함(선물)은 리셋 뒤에도 그대로 + 엄마아빠 확인
         page.click('#wishBoxBtn')
         page.wait_for_timeout(500)
         shot(page, '09-소원쿠폰함')
-        log('쿠폰함 노출', page.locator('.coupon').count() >= 1, f"coupons={page.locator('.coupon').count()}")
+        log('쿠폰함 노출(리셋 뒤 유지)', page.locator('.coupon').count() >= 1,
+            f"coupons={page.locator('.coupon').count()}")
         page.click('.coupon .c-actions button')
         page.wait_for_timeout(700)
-        start_btn = page.locator('text=새로운 100개 도전 시작').count()
-        log('소원 확인 후 새 도전 버튼', start_btn > 0, f'buttons={start_btn}')
-        shot(page, '10-소원확인-새도전')
-        if start_btn:
-            page.click('text=새로운 100개 도전 시작')
-            page.wait_for_timeout(600)
-            st = page.evaluate('window.__harang.state')
-            log('새 100개 도전 시작', st['orange'] == 0 and st['journey'] == 2, f"orange={st['orange']}, journey={st['journey']}")
-            shot(page, '11-새도전시작')
-
+        done = page.locator('.coupon.done').count()
+        st2 = page.evaluate('window.__harang.state')
+        log('소원 들어줬어요 표시', done >= 1 and st2['wishes'][0]['fulfilledAt'] is not None,
+            f'done={done} orange={st2["orange"]}')
+        shot(page, '10-소원확인'
+             )
+        page.click('#couponClose')
+        page.wait_for_timeout(300)
         # 8) 새로고침 유지
         before = page.evaluate('window.__harang.state')
         page.reload(wait_until='load')
@@ -367,39 +396,39 @@ def run():
             and prev_after_reload['rewarded'],
             f"{before_reload['solved']}문제 / orange {orange_before_prev} -> {after_prev_reload['orange']}")
 
-        # 11) 🗣️ 문제 읽어주기
-        said = page.evaluate('window.__harang.readAloud()')
-        page.wait_for_timeout(700)
-        q_say = page.evaluate('window.__harang.current.say')
-        log('읽어주기 호출 (ko-KR)', bool(said) and said.get('lang') == 'ko-KR' and len(said.get('text') or '') > 5,
-            f"{said.get('lang')} · {(said.get('text') or '')[:34]}")
-        log('읽어주기 문장 = 문제 문장', (said or {}).get('text') == q_say, f"{(said or {}).get('text')} / {q_say}")
-        speech_err = [e for e in console_errors if 'speech' in e.lower()]
-        log('읽어주기 오류 없음', len(speech_err) == 0, ' / '.join(speech_err[:2]))
-
-        # 읽는 중에 다시 누르면 정지 (헤드리스에는 음성 엔진이 없어서 엔진만 대신함)
-        page.evaluate("""() => {
-            window.__t = {spoken: 0, cancels: 0};
-            const s = window.speechSynthesis;
-            s.speak = (u) => { window.__t.spoken += 1; window.__t.last = u.text; };
-            const c = s.cancel.bind(s);
-            s.cancel = () => { window.__t.cancels += 1; try { c(); } catch (e) {} };
-        }""")
-        page.click('#readBtn')
-        page.wait_for_timeout(300)
-        playing = page.evaluate("({label: document.getElementById('readBtn').textContent, active: window.__harang.speech.active, spoken: window.__t.spoken})")
-        log('읽는 중 버튼 = ⏹ 멈추기', playing['active'] and '멈추기' in playing['label'] and playing['spoken'] >= 1, str(playing))
-        shot(page, '16-읽어주기-재생', 350)
-        page.click('#readBtn')
-        page.wait_for_timeout(300)
-        stop1 = page.evaluate("({label: document.getElementById('readBtn').textContent, cancels: window.__harang.speech.cancels, active: window.__harang.speech.active})")
-        log('다시 눌러 정지', (not stop1['active']) and stop1['cancels'] >= 1 and '읽어주기' in stop1['label'], str(stop1))
-        page.click('#readBtn')
-        page.wait_for_timeout(300)
+        # 11) 🧚 칭호 배지 → 요정 응원 (평소) / 🗣️ 읽어주기 제거
+        log('수학 읽어주기 버튼 제거', page.locator('#readBtn').count() == 0
+            and page.locator('.read-btn').count() == 0 and '읽어주기' not in page.inner_text('#questionCard'),
+            f"readBtn={page.locator('#readBtn').count()}")
+        page.evaluate('window.__harang.setOrange(12)')
+        page.wait_for_timeout(150)
+        page.click('#rankBadge')
+        page.wait_for_timeout(600)
+        cheer = page.evaluate('window.__harang.fairy')
+        log('배지 탭 → 요정 응원 팝업', cheer['open'] and not cheer['celebrate']
+            and any(k in cheer['text'] for k in ['화이팅', '할 수 있어', '잘하고 있어', '도전', '반짝', '괜찮아']),
+            cheer['text'])
+        page.evaluate('window.__harang.clearFx()')
+        page.wait_for_timeout(100)
+        page.screenshot(path=os.path.join(SHOTS, '16-칭호배지-요정응원.png'))
+        page.click('#fairyClose')
+        page.wait_for_timeout(250)
+        log('요정 닫기 버튼', page.evaluate('!document.getElementById("fairyModal").hidden') is False, '')
+        page.click('#rankBadge')
+        page.wait_for_timeout(400)
+        page.mouse.click(195, 20)   # 바깥(빈 곳) 터치로 닫기
+        page.wait_for_timeout(350)
+        log('요정 바깥 터치로 닫기', page.evaluate('!document.getElementById("fairyModal").hidden') is False, '')
+        cheers = set()
+        for _ in range(8):
+            page.click('#rankBadge')
+            page.wait_for_timeout(160)
+            cheers.add(page.evaluate('window.__harang.fairy')['text'])
+            page.evaluate('window.__harang.closeFairy()')
+            page.wait_for_timeout(60)
+        log('요정 응원 문구 여러 가지', len(cheers) >= 3, ' / '.join(sorted(cheers)))
         page.evaluate('window.__harang.next()')
-        page.wait_for_timeout(500)
-        after_next = page.evaluate("({cancels: window.__harang.speech.cancels, label: document.getElementById('readBtn').textContent, active: window.__harang.speech.active})")
-        log('다음 문제로 넘어가면 음성 정지', after_next['cancels'] >= 2 and (not after_next['active']) and '읽어주기' in after_next['label'], str(after_next))
+        page.wait_for_timeout(400)
 
         # 12) 🎯 오늘의 미션 (하루 5문제)
         page.evaluate('window.__harang.setTodaySolved(4)')
@@ -491,13 +520,43 @@ def run():
         # 16) 에셋 버전 / 서비스워커 네트워크 우선
         sw_txt = page.evaluate("fetch('sw.js').then(r => r.text())")
         html_txt = page.evaluate("fetch('index.html').then(r => r.text())")
-        log('에셋 버전 v=4', 'styles.css?v=4' in html_txt and 'app.js?v=4' in html_txt
-            and 'dict.js?v=4' in html_txt and 'dict-data.js?v=4' in html_txt,
+        log('에셋 버전 v=5', 'styles.css?v=5' in html_txt and 'app.js?v=5' in html_txt
+            and 'dict.js?v=5' in html_txt and 'dict-data.js?v=5' in html_txt,
             'index.html 쿼리')
-        log('서비스워커 v4 · 네트워크 우선',
-            "CACHE = 'harang-math-v4'" in sw_txt and 'styles.css?v=4' in sw_txt
-            and 'isShell(req.url)' in sw_txt and 'caches.match(req).then((cached) => cached' in sw_txt,
-            f"CACHE={'harang-math-v4' in sw_txt} shell={'isShell(req.url)' in sw_txt}")
+        log('서비스워커 v5 · 네트워크 우선 · 오디오 동적 캐시',
+            "CACHE = 'harang-math-v5'" in sw_txt and 'styles.css?v=5' in sw_txt
+            and 'isShell(req.url)' in sw_txt and 'caches.match(req).then((cached) => cached' in sw_txt
+            and 'isDictAudio(req.url)' in sw_txt,
+            f"CACHE={'harang-math-v5' in sw_txt} shell={'isShell(req.url)' in sw_txt}")
+
+        # 17) 수학 출제 비율 — 산수 80% / 1학년 2학기 개념 20%
+        mix = page.evaluate("""() => {
+            const arith = ['add1','add2','make10','sub10','sub2','three','blankAdd','blankSub'];
+            const num = ['countNext','countBefore','countSeq','bundles','compare','hundred'];
+            const clock = ['clock'];
+            const shape = ['pattern','shape'];
+            const g = {arith: 0, num: 0, clock: 0, shape: 0};
+            const c = {};
+            const N = 600;
+            for (let i = 0; i < N; i++) {
+                const q = window.__harang.makeQuestion();
+                c[q.type] = (c[q.type] || 0) + 1;
+                if (arith.includes(q.type)) g.arith++;
+                else if (num.includes(q.type)) g.num++;
+                else if (clock.includes(q.type)) g.clock++;
+                else g.shape++;
+            }
+            return {N, g, c};
+        }""")
+        pct = mix['g']['arith'] / mix['N'] * 100
+        log('수학 산수 출제 비율 80%', 73 <= pct <= 87,
+            f"{pct:.1f}% ({mix['g']['arith']}/{mix['N']})")
+        log('나머지 20% 개념 문제(수·시계·모양) 골고루',
+            mix['g']['num'] > 10 and mix['g']['clock'] > 10 and mix['g']['shape'] > 10,
+            str(mix['g']))
+        log('두 자리 덧셈(add2) 포함', mix['c'].get('add2', 0) > 0, f"add2={mix['c'].get('add2', 0)}")
+        log('산수 8종 모두 출제', all(mix['c'].get(k, 0) > 0 for k in
+            ['add1','add2','make10','sub10','sub2','three','blankAdd','blankSub']), str(mix['c']))
 
         # 11) 태블릿 / PC
         for name, vw, vh, mobile in [('태블릿-820', 820, 1180, True), ('PC-1280', 1280, 900, False)]:

@@ -47,6 +47,8 @@ async def main():
         errors = []
         page.on("console", lambda m: errors.append(f"{m.type}: {m.text}") if m.type == "error" else None)
         page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
+        audio_reqs = []
+        page.on("request", lambda r: audio_reqs.append(r.url) if "/audio/dict/" in r.url else None)
         await page.goto(URL, wait_until="load")
         await page.evaluate("localStorage.clear()")
         await page.reload(wait_until="load")
@@ -75,6 +77,29 @@ async def main():
         ok(not bad, f"80문장 전사 일치 {bad}")
         total = sum(r["count"] for r in rounds)
         ok(total == 110, f"전체 문장 수 {total}")
+
+        # 2-2) 받아쓰기 MP3 110개 전수 확인 (모든 파일 > 3KB, 문장과 짝 맞춤)
+        import urllib.request
+        base = URL.split("/index.html")[0]
+        missing, small = [], []
+        for r in rounds:
+            for i in range(r["count"]):
+                p = f"{base}/audio/dict/{r['key']}-{i + 1}.mp3"
+                try:
+                    with urllib.request.urlopen(p, timeout=15) as res:
+                        data = res.read()
+                    if res.status != 200:
+                        missing.append(p)
+                    elif len(data) <= 3072:
+                        small.append((p, len(data)))
+                except Exception as e:
+                    missing.append(f"{p} ({e})")
+        ok(not missing and not small, f"받아쓰기 MP3 110개 전수·모두 3KB 초과 (빠짐 {len(missing)}, 작음 {len(small)})")
+        idx = json.loads(urllib.request.urlopen(f"{base}/audio/dict/index.json", timeout=15).read())
+        bad_audio = [k for k, v in idx.items() if not v.get("text")]
+        text_by_id = {f"{r['key']}-{i + 1}": t for r in rounds for i, t in enumerate(r["texts"])}
+        mism = [k for k, t in text_by_id.items() if idx.get(k, {}).get("text") != t]
+        ok(len(idx) == 110 and not bad_audio and not mism, f"MP3 색인 110개 · 문장 일치 (불일치 {len(mism)})")
 
         # 금지 정보(학교명/학년반) 미포함
         html = await page.evaluate("document.documentElement.outerHTML")
@@ -152,22 +177,32 @@ async def main():
         tip3 = await page.inner_text("#dictTip")
         ok(res3 and res3["good"] and "마침표" in tip3, f"마침표 유연 처리 {res3} / {tip3[:30]}")
 
-        # 7) 듣기 2종
+        # 7) 듣기 2종 — 내장 MP3 (보통 1.0 / 천천히 0.72)
         await page.evaluate("__harang.dict.select('r1')")
         await page.wait_for_timeout(150)
         await page.evaluate("__harang.dict.setMode('note')")
         await page.click("#listenNormal")
-        await page.wait_for_timeout(250)
-        sp = await page.evaluate("__harang.dict.speech")
-        lst = await page.evaluate("__harang.dict.listening")
-        ok(bool(sp) and abs(sp[-1]["rate"] - 0.95) < 0.02 and sp[-1]["lang"] == "ko-KR", f"보통 속도 듣기 호출 {sp}")
-        ok(lst == "normal" or lst == "", f"듣기 상태 {lst}")
+        await page.wait_for_timeout(700)
+        aud = await page.evaluate("__harang.dict.audio")
+        pb = await page.evaluate("__harang.dict.playback")
+        ok(bool(aud) and aud[-1]["kind"] == "mp3" and aud[-1]["src"] == "audio/dict/r1-1.mp3"
+           and abs(aud[-1]["rate"] - 1.0) < 0.01, f"보통 속도 MP3 재생 {aud[-1] if aud else None}")
+        ok(bool(pb) and pb["src"].endswith("/audio/dict/r1-1.mp3") and abs(pb["rate"] - 1.0) < 0.01
+           and pb["paused"] is False, f"보통 속도 재생 상태 {pb}")
+        ok(any(u.endswith("/audio/dict/r1-1.mp3") for u in audio_reqs), f"MP3 실제 요청 {audio_reqs[:2]}")
         btn_txt = await page.inner_text("#listenNormal")
-        ok("멈추기" in btn_txt or "듣기" in btn_txt, f"듣기 버튼 토글 문구 {btn_txt}")
+        ok("멈추기" in btn_txt, f"듣기 버튼 토글 문구 {btn_txt}")
         await page.click("#listenSlow")
-        await page.wait_for_timeout(250)
-        sp2 = await page.evaluate("__harang.dict.speech")
-        ok(abs(sp2[-1]["rate"] - 0.6) < 0.02, f"천천히 듣기 rate {sp2[-1]['rate']}")
+        await page.wait_for_timeout(700)
+        aud2 = await page.evaluate("__harang.dict.audio")
+        pb2 = await page.evaluate("__harang.dict.playback")
+        ok(bool(aud2) and aud2[-1]["kind"] == "mp3" and abs(aud2[-1]["rate"] - 0.72) < 0.01,
+           f"천천히 듣기 rate {aud2[-1] if aud2 else None}")
+        ok(bool(pb2) and abs(pb2["rate"] - 0.72) < 0.01 and pb2["paused"] is False, f"천천히 재생 상태 {pb2}")
+        await page.click("#listenSlow")
+        await page.wait_for_timeout(350)
+        ok(await page.evaluate("__harang.dict.playback") is None
+           and "천천히" in await page.inner_text("#listenSlow"), "다시 눌러 정지")
         await page.screenshot(path=SHOT + "06_dict_listen_390.png")
 
         # 8) 급수 선택 목록
@@ -219,18 +254,27 @@ async def main():
         await page.wait_for_timeout(200)
 
 
-        # 11-2) 감 100 → 소원 팝업 (받아쓰기 정답으로도)
+        # 11-2) 감 100 → 요정 칭찬 팝업 → 소원 적기 (받아쓰기 정답으로도)
         await page.evaluate("__harang.dict.select('r8')")
         await page.evaluate("__harang.setOrange(99)")
         await page.wait_for_timeout(100)
         await page.evaluate("__harang.dict.setMode('note')")
         await page.evaluate("__harang.dict.showAnswer()")
         await page.evaluate("__harang.dict.mark(true)")
-        await page.wait_for_timeout(1300)
-        wish = await page.evaluate("!document.getElementById('wishModal').hidden")
-        ok(wish, "받아쓰기 정답으로 감 100 → 소원 팝업")
+        await page.wait_for_timeout(1500)
+        fairy = await page.evaluate("__harang.fairy")
+        ok(fairy["open"] and fairy["celebrate"] and "100개" in fairy["text"], f"받아쓰기 정답으로 감 100 → 요정 칭찬 {fairy}")
         await page.screenshot(path=SHOT + "13_dict_wish_390.png")
-        await page.evaluate("document.getElementById('wishCloseBtn').hidden ? document.getElementById('wishModal').hidden=true : document.getElementById('wishCloseBtn').click()")
+        await page.click("#fairyWishBtn")
+        await page.wait_for_timeout(400)
+        wish = await page.evaluate("!document.getElementById('wishModal').hidden")
+        ok(wish, "요정 → 소원 팝업 연결")
+        await page.fill("#wishInput", "놀이터 가고 싶어요")
+        await page.click("#wishSaveBtn")
+        await page.wait_for_timeout(600)
+        st = await page.evaluate("({o: __harang.state.orange, j: __harang.state.journey, w: __harang.state.wishes.length})")
+        ok(st["o"] == 0 and st["j"] == 2 and st["w"] == 1, f"소원 저장 → 감 0/100 리셋 {st}")
+        await page.click("#wishCloseBtn")
         await page.wait_for_timeout(200)
 
         # 11-3) 수학 탭 회귀 확인 (정답 → 감/과목기록)

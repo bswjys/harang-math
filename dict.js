@@ -47,7 +47,9 @@
   let mode = 'note';
   let answerShown = false;
   let listenMode = '';                       // '' | 'normal' | 'slow'
-  let utter = null;
+  let audioEl = null;                        // 내장 MP3 플레이어
+  let utter = null;                          // MP3 실패 시에만 쓰는 speechSynthesis 폴백
+  const audioLog = [];                       // 재생 기록(테스트·디버그용)
   let reviewMode = false;
   let reviewQueue = [];
   const results = {};                        // 'r1:3' -> {good, typed}
@@ -253,29 +255,60 @@
     if (ui.checkBtn) ui.checkBtn.hidden = true;
   }
 
-  /* ---------- 소리 ---------- */
-  function stopSpeak(silent) {
-    const synth = window.speechSynthesis;
-    if (synth) { try { synth.cancel(); } catch (e) { /* 정지 실패는 넘어감 */ } }
-    utter = null;
+  /* ---------- 소리 (내장 MP3 · 보통 1.0 / 천천히 0.72) ---------- */
+  const MP3_RATE = { normal: 1.0, slow: 0.72 };
+
+  function audioSrc(key, i) {
+    return `audio/dict/${key}-${i + 1}.mp3`;
+  }
+
+  function pushLog(rec) {
+    audioLog.push(Object.assign({ at: Date.now() }, rec));
+    if (audioLog.length > 40) audioLog.shift();
+    window.__dictSpeech = window.__dictSpeech || [];
+    window.__dictSpeech.push(rec);
+    if (window.__dictSpeech.length > 40) window.__dictSpeech.shift();
+  }
+
+  function resetListen() {
     listenMode = '';
     renderListen();
+  }
+
+  function stopSpeak(silent) {
+    if (audioEl) {
+      const a = audioEl;
+      audioEl = null;
+      try { a.onended = null; a.onerror = null; a.onplaying = null; a.onloadedmetadata = null; } catch (e) { /* 무시 */ }
+      try { a.pause(); } catch (e) { /* 무시 */ }
+      try { a.removeAttribute('src'); a.load(); } catch (e) { /* 무시 */ }
+    }
+    if (utter) {
+      utter = null;
+      try { window.speechSynthesis.cancel(); } catch (e) { /* 무시 */ }
+    }
+    resetListen();
     return silent;
   }
 
-  function speak(slow) {
+  function applyRate(a, slow) {
+    const rate = slow ? MP3_RATE.slow : MP3_RATE.normal;
+    try {
+      a.defaultPlaybackRate = rate;
+      a.playbackRate = rate;
+      a.preservesPitch = true;          /* 천천히 들어도 목소리 높낮이는 그대로 */
+      a.webkitPreservesPitch = true;
+    } catch (e) { /* 무시 */ }
+  }
+
+  /* MP3가 정말 재생되지 않을 때만 쓰는 예전 방식 */
+  function speakFallback(slow, want, text, reason) {
     const synth = window.speechSynthesis;
     const U = window.SpeechSynthesisUtterance;
-    const want = slow ? 'slow' : 'normal';
     if (!synth || typeof U !== 'function') {
       if (window.showToast) showToast('🔊', '이 브라우저에서는 듣기를 쓸 수 없어요', '', 2600);
       return false;
     }
-    const samePlaying = listenMode === want;
-    stopSpeak(true);
-    if (samePlaying) { renderListen(); return false; }
-
-    const text = curItem().text;
     try {
       const u = new U(text);
       u.lang = 'ko-KR';
@@ -286,22 +319,61 @@
         const ko = vs.find((v) => /^ko([-_]|$)/i.test(v.lang || ''));
         if (ko) u.voice = ko;
       } catch (e) { /* 목소리 목록은 없어도 괜찮아요 */ }
-      u.onend = () => { if (listenMode === want) { listenMode = ''; renderListen(); } };
-      u.onerror = () => { if (listenMode === want) { listenMode = ''; renderListen(); } };
+      u.onend = () => { if (listenMode === want) resetListen(); };
+      u.onerror = () => { if (listenMode === want) resetListen(); };
       utter = u;
       listenMode = want;
       renderListen();
-      window.__dictSpeech = window.__dictSpeech || [];
-      window.__dictSpeech.push({ text, lang: 'ko-KR', rate: u.rate, at: Date.now() });
-      /* iOS는 바로 이어서 speak하면 첫 소리가 씹히는 경우가 있어 아주 짧게 쉬었다 읽어요 */
-      setTimeout(() => { try { synth.speak(u); } catch (e) { listenMode = ''; renderListen(); } }, 60);
+      pushLog({ kind: 'tts', text, lang: 'ko-KR', rate: u.rate, reason: reason || '' });
+      synth.speak(u);
       if (window.playSound) playSound('tap');
       return true;
     } catch (e) {
-      listenMode = '';
-      renderListen();
+      resetListen();
       return false;
     }
+  }
+
+  function speakMp3(slow, want, text) {
+    const src = audioSrc(curKey, idx);
+    let a;
+    try { a = new Audio(src); } catch (e) { return speakFallback(slow, want, text, 'no-audio'); }
+    a.preload = 'auto';
+    applyRate(a, slow);
+    /* iOS Safari는 재생이 시작될 때 재생 속도를 1.0으로 되돌리는 경우가 있어 한 번 더 잡아 줌 */
+    a.onloadedmetadata = () => applyRate(a, slow);
+    a.onplaying = () => applyRate(a, slow);
+    a.onended = () => { if (listenMode === want) { audioEl = null; resetListen(); } };
+    a.onerror = () => {
+      if (listenMode !== want) return;
+      audioEl = null;
+      resetListen();
+      speakFallback(slow, want, text, 'mp3-error');
+    };
+    audioEl = a;
+    listenMode = want;
+    renderListen();
+    pushLog({ kind: 'mp3', src, text, rate: slow ? MP3_RATE.slow : MP3_RATE.normal, playbackRate: a.playbackRate });
+    let p = null;
+    try { p = a.play(); } catch (e) { p = null; }
+    if (p && typeof p.catch === 'function') {
+      p.catch(() => {
+        if (listenMode !== want) return;
+        audioEl = null;
+        resetListen();
+        speakFallback(slow, want, text, 'play-rejected');
+      });
+    }
+    if (window.playSound) playSound('tap');
+    return true;
+  }
+
+  function speak(slow) {
+    const want = slow ? 'slow' : 'normal';
+    const samePlaying = listenMode === want;
+    stopSpeak(true);
+    if (samePlaying) { renderListen(); return false; }
+    return speakMp3(slow, want, curItem().text);
   }
 
   /* ---------- 채점 ---------- */
@@ -420,6 +492,7 @@
   }
 
   function chooseRound(key) {
+    stopSpeak(true);
     curKey = key;
     idx = 0;
     reviewMode = false;
@@ -433,6 +506,7 @@
   }
 
   function go(delta) {
+    stopSpeak(true);
     const total = curRound().items.length;
     const next = idx + delta;
     if (next < 0) return;
@@ -608,6 +682,8 @@
       type: (text) => { if (ui.input) ui.input.value = text; return checkType(); },
       listen: (slow) => speak(!!slow),
       get listening() { return listenMode; },
+      get audio() { return audioLog.slice(-5); },
+      audioSrc: (key, i) => audioSrc(key == null ? curKey : key, i == null ? idx : i),
       next: () => { go(1); return { idx, round: curKey }; },
       prev: () => { go(-1); return { idx, round: curKey }; },
       get result() { return results[curKey + ':' + idx] || null; },
@@ -615,7 +691,8 @@
       review: () => { startReview(); return { reviewMode, queue: reviewQueue.length }; },
       endReview: () => { endReview(); return reviewMode; },
       stop: () => { stopSpeak(true); return listenMode; },
-      get speech() { return (window.__dictSpeech || []).slice(-3); }
+      get speech() { return (window.__dictSpeech || []).slice(-3); },
+      get playback() { return audioEl ? { src: audioEl.currentSrc || audioEl.src, rate: audioEl.playbackRate, paused: audioEl.paused } : null; }
     };
   }
 })();

@@ -1,0 +1,662 @@
+{
+ "p1-1": {
+  "text": "책을 읽고 생각해요.",
+  "size": 15120,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p1-2": {
+  "text": "하늘이 맑고 파래요.",
+  "size": 14400,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p1-3": {
+  "text": "의자에 앉아 쉬어요.",
+  "size": 14256,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p1-4": {
+  "text": "밝은 별이 반짝여요.",
+  "size": 15264,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p1-5": {
+  "text": "넓은 운동장에서 놀아요.",
+  "size": 16560,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p1-6": {
+  "text": "동생은 머리가 짧아요.",
+  "size": 15984,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p1-7": {
+  "text": "굵은 연필로 썼어요.",
+  "size": 15840,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p1-8": {
+  "text": "꽃이 많아서 예뻐요.",
+  "size": 14688,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p1-9": {
+  "text": "삶은 달걀을 먹었어요.",
+  "size": 16848,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p1-10": {
+  "text": "싫어하는 채소도 먹어요.",
+  "size": 15696,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-1": {
+  "text": "친구와 같이 놀았어요.",
+  "size": 15840,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-2": {
+  "text": "정말 좋아하는 노래예요.",
+  "size": 15840,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-3": {
+  "text": "맛있게 먹어요.",
+  "size": 12240,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-4": {
+  "text": "꽃이 활짝 피었어요.",
+  "size": 15696,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-5": {
+  "text": "옷을 스스로 개어요.",
+  "size": 14688,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-6": {
+  "text": "밭에 씨앗을 심었어요.",
+  "size": 15840,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-7": {
+  "text": "낮에는 따뜻해요.",
+  "size": 13824,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-8": {
+  "text": "연필 끝이 뾰족해요.",
+  "size": 15120,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-9": {
+  "text": "부엌에 그릇을 놓아요.",
+  "size": 14688,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p2-10": {
+  "text": "앞으로 더 열심히 할래요.",
+  "size": 16128,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-1": {
+  "text": "나는 아침에 일찍 일어나요.",
+  "size": 16704,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-2": {
+  "text": "동생과 사이좋게 놀아요.",
+  "size": 16128,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-3": {
+  "text": "할머니 댁에 놀러 갔어요.",
+  "size": 16704,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-4": {
+  "text": "책가방을 스스로 챙겨요.",
+  "size": 16848,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-5": {
+  "text": "우리 가족은 네 명이에요.",
+  "size": 15984,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-6": {
+  "text": "오늘은 날씨가 아주 좋아요.",
+  "size": 17712,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-7": {
+  "text": "친구에게 편지를 썼어요.",
+  "size": 16848,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-8": {
+  "text": "줄을 서서 차례를 지켜요.",
+  "size": 16848,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-9": {
+  "text": "저녁에 가족과 산책을 해요.",
+  "size": 17568,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "p3-10": {
+  "text": "내일도 재미있게 공부해요.",
+  "size": 17136,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-1": {
+  "text": "부러워요.",
+  "size": 11232,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-2": {
+  "text": "구름이 둥실둥실",
+  "size": 15264,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-3": {
+  "text": "쌩쌩 지나갑니다.",
+  "size": 14112,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-4": {
+  "text": "깡총깡총",
+  "size": 12672,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-5": {
+  "text": "활짝 피었습니다.",
+  "size": 13536,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-6": {
+  "text": "그림책을 봅니다.",
+  "size": 13680,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-7": {
+  "text": "깜짝 놀랐어.",
+  "size": 12672,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-8": {
+  "text": "뜀틀에 올랐어.",
+  "size": 13104,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-9": {
+  "text": "성이 무너졌어.",
+  "size": 13392,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r1-10": {
+  "text": "색연필을 빌려 줘서",
+  "size": 15120,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-1": {
+  "text": "호랑이가 잡은",
+  "size": 12672,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-2": {
+  "text": "필통에 연필이 없다.",
+  "size": 15120,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-3": {
+  "text": "하늘이 이렇게 맑아서",
+  "size": 15264,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-4": {
+  "text": "붉게 물들었어요.",
+  "size": 14256,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-5": {
+  "text": "참외가 되는 건",
+  "size": 12672,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-6": {
+  "text": "바람 따라 여기저기",
+  "size": 15264,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-7": {
+  "text": "감기를 앓다.",
+  "size": 12816,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-8": {
+  "text": "제자리에 듭시다.",
+  "size": 13248,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-9": {
+  "text": "닭과 병아리가",
+  "size": 13248,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r2-10": {
+  "text": "아주 많이 무섭다.",
+  "size": 13968,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-1": {
+  "text": "제가 좋아하는 색은",
+  "size": 14400,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-2": {
+  "text": "빨갛게 익은",
+  "size": 12240,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-3": {
+  "text": "할머니 댁에",
+  "size": 12096,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-4": {
+  "text": "시장에 갔어.",
+  "size": 12528,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-5": {
+  "text": "흠뻑 젖었습니다.",
+  "size": 13680,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-6": {
+  "text": "친구를 만났다.",
+  "size": 13248,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-7": {
+  "text": "일곱 시에 일어났다.",
+  "size": 14976,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-8": {
+  "text": "농장에 가서",
+  "size": 12240,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-9": {
+  "text": "된장찌개",
+  "size": 11520,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r3-10": {
+  "text": "앞마을 큰길의 목소리로",
+  "size": 16848,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-1": {
+  "text": "어느 날 아침",
+  "size": 12096,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-2": {
+  "text": "재미있는 일 없을까?",
+  "size": 13824,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-3": {
+  "text": "시장에 모여",
+  "size": 11664,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-4": {
+  "text": "미역도 맛있어.",
+  "size": 13104,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-5": {
+  "text": "귀한 물건을 많이",
+  "size": 13824,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-6": {
+  "text": "약속에 늦지 않게",
+  "size": 14112,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-7": {
+  "text": "반찬을 골고루",
+  "size": 13968,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-8": {
+  "text": "책을 읽습니다.",
+  "size": 12384,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-9": {
+  "text": "부자가 될 수 있겠어.",
+  "size": 14976,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r4-10": {
+  "text": "바닷속에 가라앉고",
+  "size": 14688,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-1": {
+  "text": "홀라후프 돌리기",
+  "size": 13968,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-2": {
+  "text": "연필 한 자루",
+  "size": 13248,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-3": {
+  "text": "젊어지는 샘물",
+  "size": 13824,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-4": {
+  "text": "어떻게 해?",
+  "size": 11232,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-5": {
+  "text": "충전해 놓을게.",
+  "size": 12816,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-6": {
+  "text": "포기하지 않고",
+  "size": 13104,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-7": {
+  "text": "재주 많은 다섯 친구",
+  "size": 15120,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-8": {
+  "text": "잘 들리면 좋겠다.",
+  "size": 14688,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-9": {
+  "text": "안타까웠고",
+  "size": 11664,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r5-10": {
+  "text": "응원해 주고 싶었어.",
+  "size": 14400,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-1": {
+  "text": "모두의 안전을 위해",
+  "size": 14832,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-2": {
+  "text": "깡총깡총 토끼가",
+  "size": 15120,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-3": {
+  "text": "갈 수 없게 됩니다.",
+  "size": 14112,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-4": {
+  "text": "심장이 쿵쾅쿵쾅",
+  "size": 15696,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-5": {
+  "text": "책을 읽을 수 있겠지?",
+  "size": 15120,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-6": {
+  "text": "머리카락 숫자를 세었어요.",
+  "size": 16992,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-7": {
+  "text": "스스로 빛을 내는",
+  "size": 14256,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-8": {
+  "text": "꼬불꼬불 말았어요.",
+  "size": 14112,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-9": {
+  "text": "종이의 뒷면도 쓰면",
+  "size": 15408,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r6-10": {
+  "text": "왜 입이 안 떨어지지?",
+  "size": 13968,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-1": {
+  "text": "색종이를 뒤집어 놓고",
+  "size": 15696,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-2": {
+  "text": "어떻게 해야 하지?",
+  "size": 13104,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-3": {
+  "text": "밤에도 불을 밝혀",
+  "size": 14112,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-4": {
+  "text": "문어의 빨판을 본 때",
+  "size": 15408,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-5": {
+  "text": "떨어지게 됩니다.",
+  "size": 12384,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-6": {
+  "text": "가시가 많이",
+  "size": 11376,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-7": {
+  "text": "털에 잘 붙습니다.",
+  "size": 13824,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-8": {
+  "text": "쉽게 붙었다 떼었다",
+  "size": 15552,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-9": {
+  "text": "당황했던 적이 있어.",
+  "size": 14400,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r7-10": {
+  "text": "달콤하고 잠조름했다.",
+  "size": 16128,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-1": {
+  "text": "하지만 괜찮아.",
+  "size": 13536,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-2": {
+  "text": "사랑받고 말 거니까.",
+  "size": 15120,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-3": {
+  "text": "좋은 생각이",
+  "size": 11952,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-4": {
+  "text": "내 착각이었어.",
+  "size": 13248,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-5": {
+  "text": "아무도 없는 곳으로",
+  "size": 14256,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-6": {
+  "text": "밤새 열심히 만들었어.",
+  "size": 16848,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-7": {
+  "text": "뭐라고 했어?",
+  "size": 11808,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-8": {
+  "text": "브로콜리 섞어 주고",
+  "size": 14832,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-9": {
+  "text": "보글보글 끓여 주면",
+  "size": 14256,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ },
+ "r8-10": {
+  "text": "항아리를 빼앗으려고",
+  "size": 14976,
+  "voice": "ko-KR-SunHiNeural",
+  "pitch": "+6Hz"
+ }
+}

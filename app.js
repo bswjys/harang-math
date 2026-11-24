@@ -43,7 +43,7 @@ const LEVELS = [
 
 /* ---------- 단원 분류 (리포트용) ---------- */
 const CATEGORIES = [
-  { key: 'add',   name: '덧셈',      emoji: '➕', types: ['add1', 'make10', 'three', 'blankAdd'] },
+  { key: 'add',   name: '덧셈',      emoji: '➕', types: ['add1', 'add2', 'make10', 'three', 'blankAdd'] },
   { key: 'sub',   name: '뺄셈',      emoji: '➖', types: ['sub10', 'sub2', 'blankSub'] },
   { key: 'num',   name: '수/비교',   emoji: '🔢', types: ['countNext', 'countBefore', 'countSeq', 'bundles', 'compare', 'hundred'] },
   { key: 'clock', name: '시계',      emoji: '⏰', types: ['clock'] },
@@ -88,7 +88,7 @@ function todayKey() {
 
 function defaultState() {
   return {
-    v: 3,
+    v: 5,
     orange: 0,
     totalOrange: 0,
     journey: 1,
@@ -109,10 +109,12 @@ function defaultState() {
 
 function loadState() {
   let s = defaultState();
+  let savedV = 0;
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) {
       const saved = JSON.parse(raw);
+      savedV = Number(saved.v) || 0;
       s = Object.assign(s, saved);
       s.today = Object.assign({ date: todayKey(), solved: 0, correct: 0, wrong: 0, missionDone: false }, saved.today || {});
       s.total = Object.assign({ solved: 0, correct: 0, wrong: 0 }, saved.total || {});
@@ -144,6 +146,13 @@ function loadState() {
   s.orange = Math.max(0, Math.min(100, Number(s.orange) || 0));
   s.journey = Math.max(1, Number(s.journey) || 1);
   s.wrongList = s.wrongList.filter((w) => w && w.id && w.q).slice(-50);
+  /* v5: 소원을 저장하면 그 자리에서 감을 0/100으로 리셋 — 예전 저장값(100개 + 저장한 소원)도 새 도전으로 이어 줌 */
+  if (savedV < 5 && s.orange >= 100 && s.wishes.some((w) => w && w.journey === s.journey)) {
+    s.orange = 0;
+    s.journey += 1;
+    s.seenLevel = 0;
+  }
+  s.v = 5;
   return s;
 }
 
@@ -307,6 +316,48 @@ gen(function genAdd1() {
           <div class="hint-group sub">${candies(b, '🍓')}</div>
         </div><p class="hint-note">🍬 ${a}개하고 🍓 ${b}개를 합쳐서 세어 보세요!</p>`
     }
+  };
+});
+
+/* 1-b) 두 자리 수 덧셈 (받아올림 없이 — 1학년 2학기) */
+gen(function genAdd2() {
+  const mode = Math.random();
+  let a, b, total, explain;
+  if (mode < 0.5) {
+    /* (몇십몇) + (몇) */
+    const t = randInt(1, 7);
+    const o = randInt(1, 8);
+    a = t * 10 + o;
+    b = randInt(1, 9 - o);
+    total = a + b;
+    explain = `${a}는 ${t * 10}하고 ${o}. 낱개 ${o}개에 ${b}개를 더하면 <b>${o + b}개</b>! 십은 그대로라서 <b>${total}</b>이에요.<br><span class="eq">${a} + ${b} = ${total}</span>`;
+  } else if (mode < 0.82) {
+    /* (몇십몇) + (몇십) */
+    const t = randInt(1, 6);
+    const o = randInt(1, 9);
+    const t2 = randInt(1, 8 - t);
+    a = t * 10 + o;
+    b = t2 * 10;
+    total = a + b;
+    explain = `${a} + ${b}: 십의 자리끼리 더하면 ${t} + ${t2} = <b>${t + t2}십</b>! 낱개 ${o}는 그대로라서 <b>${total}</b>이에요.<br><span class="eq">${a} + ${b} = ${total}</span>`;
+  } else {
+    /* (몇십) + (몇십) */
+    const t = randInt(1, 5);
+    const t2 = randInt(1, 4);
+    a = t * 10;
+    b = t2 * 10;
+    total = a + b;
+    explain = `${t}십 + ${t2}십 = <b>${t + t2}십</b>! 그래서 <b>${total}</b>이에요.<br><span class="eq">${a} + ${b} = ${total}</span>`;
+  }
+  return {
+    type: 'add2',
+    tag: '두 자리 더하기',
+    say: `${a} 더하기 ${b}는 얼마일까요?`,
+    stage: eqLine(`${NF(a)} ${OP('+')} ${NF(b)} ${OP('=')} ${BLANK()}`),
+    options: numberChoices(total, 4, 4, 0),
+    answer: String(total),
+    explain,
+    hint: null
   };
 });
 
@@ -682,20 +733,32 @@ gen(function genShape() {
 });
 
 /* 문제 묶음 선택 */
-const ARITH_GENS = ['add1', 'make10', 'sub10', 'sub2', 'three', 'blankAdd', 'blankSub'];
+const ARITH_GENS = ['add1', 'add2', 'make10', 'sub10', 'sub2', 'three', 'blankAdd', 'blankSub'];
 const NUM_GENS = ['countNext', 'countBefore', 'countSeq', 'bundles', 'compare', 'hundred'];
 const CLOCK_GENS = ['clock'];
 const SHAPE_GENS = ['pattern', 'shape'];
 
+/* 출제 비율 — 산수(더하기·빼기·10이 되는 짝·세 수) 80%, 나머지 1학년 2학기 개념 20% */
+const MATH_MIX = [
+  { share: 0.80, gens: ARITH_GENS },
+  { share: 0.08, gens: NUM_GENS },
+  { share: 0.06, gens: CLOCK_GENS },
+  { share: 0.06, gens: SHAPE_GENS }
+];
+function pickGenIds() {
+  const r = Math.random();
+  let acc = 0;
+  for (const m of MATH_MIX) {
+    acc += m.share;
+    if (r < acc) return m.gens;
+  }
+  return ARITH_GENS;
+}
+
 let lastType = '';
 function makeQuestion() {
   for (let attempt = 0; attempt < 30; attempt++) {
-    const r = Math.random();
-    let ids;
-    if (r < 0.55) ids = ARITH_GENS;
-    else if (r < 0.80) ids = NUM_GENS;
-    else if (r < 0.91) ids = CLOCK_GENS;
-    else ids = SHAPE_GENS;
+    const ids = pickGenIds();
     const id = pick(ids);
     if (id === lastType && attempt < 10) continue;
     const g = GENS.find((fn) => fn().type === id);
@@ -767,7 +830,7 @@ let reviewActive = false;    // 🌸 헷갈린 문제 복습 모드
 let reviewQueue = [];
 
 const ui = {
-  levelChip: $('levelChip'), levelEmoji: $('levelEmoji'), levelName: $('levelName'),
+  rankBadge: $('rankBadge'), levelEmoji: $('levelEmoji'), levelName: $('levelName'),
   orangeCount: $('orangeCount'), progressBar: $('progressBar'), progressOuter: $('progressOuter'),
   todayProgress: $('todayProgress'), comboChip: $('comboChip'),
   qTag: $('qTag'), qNum: $('qNum'), stage: $('questionStage'),
@@ -778,7 +841,9 @@ const ui = {
   wishModal: $('wishModal'), couponModal: $('couponModal'),
   missionCard: $('missionCard'), missionCount: $('missionCount'), missionStars: $('missionStars'),
   missionState: $('missionState'),
-  readBtn: $('readBtn'), prevBtn: $('prevBtn'), nextBtn: $('nextBtn'),
+  fairyModal: $('fairyModal'), fairyCard: $('fairyCard'), fairyText: $('fairyText'),
+  fairyActions: $('fairyActions'), fairyTip: $('fairyTip'),
+  prevBtn: $('prevBtn'), nextBtn: $('nextBtn'),
   reviewBtn: $('reviewBtn'), reportBtn: $('reportBtn'),
   reviewBanner: $('reviewBanner'), reviewLeft: $('reviewLeft'),
   reportModal: $('reportModal'), reportBody: $('reportBody'), reportDate: $('reportDate'),
@@ -890,76 +955,78 @@ function showToast(emoji, text, kind = '', ms = 2600) {
   toastTimer = setTimeout(() => { ui.toast.hidden = true; }, ms);
 }
 
-/* ---------- 문제 읽어주기 (TTS) ---------- */
-let speechActive = false;
-let speechTimer = null;
-let lastSpeech = null;
-let speechCancels = 0;
-const speechRequests = [];
+/* ---------- 🧚 요정 응원 ---------- */
+const FAIRY_CHEERS = [
+  '하랑아 화이팅! 🌟',
+  '열심히 해! 할 수 있어 💪',
+  '지금까지 정말 잘하고 있어! 💖',
+  '한 문제만 더 도전해 볼까? ✨',
+  '하랑핑 오늘도 반짝반짝! 🌸',
+  '틀려도 괜찮아, 다시 하면 돼! 🍀'
+];
+const FAIRY_100_TEXT = '우와~ 100개 다 모았어! 정말 잘했어요! 🎉🧚‍♀️';
+let lastCheer = -1;
 
-function speechFallbackText(q) {
-  if (!q) return '';
-  const plain = String(q.stage || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-  return `${q.tag || ''} ${plain}`.trim();
+function nextCheer() {
+  if (FAIRY_CHEERS.length < 2) return FAIRY_CHEERS[0] || '하랑아 화이팅! 🌟';
+  let i = Math.floor(Math.random() * FAIRY_CHEERS.length);
+  if (i === lastCheer) i = (i + 1) % FAIRY_CHEERS.length;
+  lastCheer = i;
+  return FAIRY_CHEERS[i];
 }
 
-function pickKoVoice(synth) {
-  try {
-    const voices = synth.getVoices() || [];
-    return voices.find((v) => /^ko([-_]|$)/i.test(v.lang || '')) || null;
-  } catch (e) { return null; }
+function fairyModalOpen() {
+  return !!ui.fairyModal && !ui.fairyModal.hidden;
 }
 
-function setReadBtn(on) {
-  if (!ui.readBtn) return;
-  ui.readBtn.textContent = on ? '⏹ 멈추기' : '🗣️ 읽어주기';
-  ui.readBtn.classList.toggle('reading', !!on);
-  ui.readBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+function closeFairy() {
+  if (!ui.fairyModal) return;
+  ui.fairyModal.hidden = true;
+  const others = [ui.wishModal, ui.couponModal, ui.reportModal].some((m) => m && !m.hidden);
+  if (!others) document.body.style.overflow = '';
 }
 
-function stopSpeech(count = true) {
-  const synth = window.speechSynthesis;
-  if (speechActive && synth) {
-    try { synth.cancel(); } catch (e) { /* 정지 실패는 넘어감 */ }
-    if (count) speechCancels += 1;
+function openFairy(celebrate) {
+  if (!ui.fairyModal) return;
+  const party = celebrate === undefined ? state.orange >= 100 : !!celebrate;
+  ui.fairyCard.classList.toggle('celebrate', party);
+  ui.fairyText.textContent = party ? FAIRY_100_TEXT : nextCheer();
+  ui.fairyActions.innerHTML = '';
+
+  if (party) {
+    const go = document.createElement('button');
+    go.type = 'button';
+    go.className = 'btn btn-gold big';
+    go.id = 'fairyWishBtn';
+    go.textContent = '소원 말하러 가기 🎁';
+    go.addEventListener('click', () => {
+      closeFairy();
+      openWishModal(false);
+    });
+    ui.fairyActions.appendChild(go);
+
+    const later = document.createElement('button');
+    later.type = 'button';
+    later.className = 'btn btn-ghost';
+    later.id = 'fairyLaterBtn';
+    later.textContent = '조금 있다가 정할래요';
+    later.addEventListener('click', closeFairy);
+    ui.fairyActions.appendChild(later);
+    ui.fairyTip.textContent = '감 100개 달성! 🎁 소원 쿠폰함도 열려 있어요';
+  } else {
+    ui.fairyTip.textContent = '배지나 빈 곳을 눌러 닫을 수 있어요';
   }
-  clearTimeout(speechTimer);
-  speechTimer = null;
-  speechActive = false;
-  setReadBtn(false);
-}
 
-function speakQuestion() {
-  const synth = window.speechSynthesis;
-  const Utter = window.SpeechSynthesisUtterance;
-  if (!synth || typeof Utter !== 'function') {
-    showToast('🗣️', '이 브라우저에서는 읽어주기를 쓸 수 없어요', '', 2800);
-    return;
-  }
-  if (speechActive) { stopSpeech(); return; }
+  ui.fairyModal.hidden = false;
+  document.body.style.overflow = 'hidden';
 
-  const q = current;
-  const text = (q && (q.say || speechFallbackText(q))) || '문제를 읽어 줄게요!';
-  try {
-    const u = new Utter(text);
-    u.lang = 'ko-KR';
-    u.rate = 0.9;
-    u.pitch = 1.15;
-    const voice = pickKoVoice(synth);
-    if (voice) u.voice = voice;
-    u.onend = () => stopSpeech(false);
-    u.onerror = () => stopSpeech(false);
-    lastSpeech = { text, lang: 'ko-KR', rate: 0.9, at: Date.now() };
-    speechRequests.push({ text, lang: 'ko-KR' });
-    speechActive = true;
-    setReadBtn(true);
-    synth.speak(u);
-    clearTimeout(speechTimer);
-    speechTimer = setTimeout(() => stopSpeech(false), Math.min(25000, 1600 + text.length * 270));
-  } catch (e) {
-    speechActive = false;
-    setReadBtn(false);
-    showToast('🗣️', '읽어주기를 시작하지 못했어요', '', 2400);
+  if (party) {
+    playSound('wish');
+    burst(34, true);
+    setTimeout(() => burst(20, true), 450);
+  } else {
+    playSound('tap');
+    burst(12, true);
   }
 }
 
@@ -994,7 +1061,6 @@ function renderEntry(entry) {
   rewarded = !!entry.rewarded;
   retried = !!entry.retried;
   firstAttempt = !entry.counted;
-  stopSpeech();
 
   const q = entry.q;
   ui.qTag.textContent = q.tag;
@@ -1037,7 +1103,6 @@ function renderEntry(entry) {
     ui.reviewLeft.textContent = reviewQueue.length ? `${reviewQueue.length}문제 더 있어요` : '마지막 문제예요';
   }
 
-  setReadBtn(false);
   renderNav();
 
   if (entry.answered) showFeedback(entry.correct);
@@ -1116,8 +1181,9 @@ function addOrange(amount) {
     if (newLevel.at < 100) burst(24, true);
     playSound('level');
   }
-  if (state.orange >= 100 && !currentJourneyWish()) {
-    setTimeout(() => openWishModal(true), 900);
+  const crossed = before < 100 && state.orange >= 100;
+  if (crossed && !currentJourneyWish()) {
+    setTimeout(() => openFairy(true), 850);
   }
   renderStatus(true);
   saveState();
@@ -1524,6 +1590,7 @@ const wishInput = $('wishInput');
 const wishChips = $('wishChips');
 const wishForm = $('wishForm');
 const wishSavedBox = $('wishSavedBox');
+let wishJustSaved = null;   // 방금 저장한 소원 — 감이 0으로 돌아간 뒤에도 확인 카드를 보여 주려고
 
 function currentJourneyWish() {
   return state.wishes.find((w) => w.journey === state.journey);
@@ -1546,8 +1613,18 @@ function buildWishChips() {
 }
 
 function openWishModal(auto = false) {
-  const existing = currentJourneyWish();
+  const existing = wishJustSaved || currentJourneyWish();
   const closeBtn = $('wishCloseBtn');
+  const title = $('wishTitle');
+  const lead = $('wishLead');
+  if (title) {
+    title.innerHTML = wishJustSaved
+      ? '소원 쿠폰이 완성됐어요! 🎁'
+      : '축하해요 김하랑!<br>감 100개 다 모았어요! 🎉';
+  }
+  if (lead) {
+    lead.textContent = wishJustSaved ? '이제 새로운 100개를 모아요 🌱' : '엄마 아빠에게 소원 말하기 🎁';
+  }
   ui.wishModal.hidden = false;
   document.body.style.overflow = 'hidden';
 
@@ -1604,27 +1681,33 @@ function saveWish() {
     return;
   }
   if (currentJourneyWish()) return;
-  state.wishes.push({
+  const wish = {
     id: 'w' + Date.now(),
     journey: state.journey,
     text,
     createdAt: new Date().toISOString(),
     fulfilledAt: null
-  });
-  saveState();
-  renderStatus();
+  };
+  state.wishes.push(wish);
+  wishJustSaved = wish;
+  /* 감 100개 완성 → 선물 쿠폰 생성과 동시에 새 100개 모으기 시작 (누적 총 감·오늘 문제·콤보·쿠폰·리포트 기록은 그대로) */
+  resetOrangeCycle();
   playSound('wish');
-  burst(30, true);
+  burst(22, true);
   openWishModal(false);
 }
 
-function startNewJourney() {
-  state.journey += 1;
+/* 감 카운터만 0/100으로 — 새 도전 시작 */
+function resetOrangeCycle() {
   state.orange = 0;
-  state.combo = 0;
+  state.journey += 1;
   state.seenLevel = 0;
   saveState();
   renderStatus();
+}
+
+function startNewJourney() {
+  resetOrangeCycle();
   closeModals();
   burst(40, true);
   playSound('level');
@@ -1635,6 +1718,8 @@ function closeModals() {
   ui.wishModal.hidden = true;
   ui.couponModal.hidden = true;
   if (ui.reportModal) ui.reportModal.hidden = true;
+  if (ui.fairyModal) ui.fairyModal.hidden = true;
+  wishJustSaved = null;
   document.body.style.overflow = '';
 }
 
@@ -1721,7 +1806,6 @@ function setSubject(name) {
   const td = $('tabDict');
   if (tm) { tm.classList.toggle('on', subj === 'math'); tm.setAttribute('aria-selected', subj === 'math' ? 'true' : 'false'); }
   if (td) { td.classList.toggle('on', subj === 'dict'); td.setAttribute('aria-selected', subj === 'dict' ? 'true' : 'false'); }
-  stopSpeech();
   if (subj === 'dict' && window.harangDict && window.harangDict.refresh) window.harangDict.refresh();
   if (subj === 'dict' && window.harangDict && window.harangDict.stop) window.harangDict.stop();
   else if (subj === 'math' && window.harangDict && window.harangDict.stop) window.harangDict.stop();
@@ -1749,8 +1833,16 @@ ui.soundBtn.addEventListener('click', () => {
   if (state.sound) { playSound('tap'); setTimeout(() => playSound('correct'), 120); }
 });
 
-/* 🗣️ 문제 읽어주기 */
-if (ui.readBtn) ui.readBtn.addEventListener('click', speakQuestion);
+/* 🧚 칭호 배지 → 요정 응원 */
+if (ui.rankBadge) {
+  ui.rankBadge.addEventListener('click', () => {
+    openFairy(state.orange >= 100);
+  });
+}
+if (ui.fairyModal) {
+  $('fairyClose').addEventListener('click', closeFairy);
+  ui.fairyModal.addEventListener('click', (e) => { if (e.target === ui.fairyModal) closeFairy(); });
+}
 
 /* ◀ 이전 문제 / 다음 문제 ▶ */
 if (ui.prevBtn) ui.prevBtn.addEventListener('click', () => {
@@ -1813,7 +1905,7 @@ renderMission();
 renderReviewButton();
 setSubject(state.subject || 'math');   // 마지막에 보던 과목으로 열기
 if (state.orange >= 100 && !currentJourneyWish()) {
-  setTimeout(() => openWishModal(false), 700);
+  setTimeout(() => openFairy(true), 700);
 }
 
 /* PWA */
@@ -1872,8 +1964,17 @@ if (new URLSearchParams(location.search).get('test') === '1') {
       const b = ui.fbActions.querySelector('button');
       return b ? b.id : '';
     },
-    readAloud() { speakQuestion(); return lastSpeech; },
-    get speech() { return { active: speechActive, cancels: speechCancels, last: lastSpeech, requests: speechRequests.slice(-5) }; },
+    get fairy() {
+      return {
+        open: fairyModalOpen(),
+        celebrate: !!(ui.fairyCard && ui.fairyCard.classList.contains('celebrate')),
+        text: ui.fairyText ? ui.fairyText.textContent : '',
+        actions: ui.fairyActions ? [...ui.fairyActions.querySelectorAll('button')].map((b) => b.textContent) : []
+      };
+    },
+    openFairy(on) { openFairy(on); return this.fairy; },
+    closeFairy() { closeFairy(); return this.fairy; },
+    tapRank() { if (ui.rankBadge) ui.rankBadge.click(); return this.fairy; },
     get mission() { return { solved: state.today.solved, done: !!state.today.missionDone, shown: (ui.missionCount || {}).textContent || '' }; },
     setTodaySolved(n) {
       state.today.solved = Math.max(0, Number(n) || 0);
