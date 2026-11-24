@@ -223,6 +223,21 @@ let oranges = [];        // 감 비(🍊) — 위에서 우수수 떨어지는 �
 let fxRunning = false;
 const MAX_ORANGES = 180; /* 연속으로 눌러도 이만큼까지만 (느려지지 않게) */
 const ORANGE_EMOJI = '🍊';
+let fxDpr = 1;
+
+/* 감 그림은 한 번만 그려 두고 복사해서 씀 — 180개가 떨어져도 끊기지 않게 */
+const ORANGE_SPRITE = (() => {
+  const S = 96;
+  const c = document.createElement('canvas');
+  c.width = S;
+  c.height = S;
+  const g = c.getContext('2d');
+  g.font = `${S - 10}px serif`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText(ORANGE_EMOJI, S / 2, S / 2 + 2);
+  return c;
+})();
 
 function startFx() {
   if (fxRunning) return;
@@ -232,6 +247,7 @@ function startFx() {
 
 function sizeFx() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  fxDpr = dpr;
   fxCanvas.width = Math.floor(window.innerWidth * dpr);
   fxCanvas.height = Math.floor(window.innerHeight * dpr);
   fxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -306,6 +322,7 @@ function fxLoop() {
 
   if (oranges.length) {
     const now = performance.now();
+    fxCtx.globalAlpha = 1;
     for (let i = 0; i < oranges.length; i++) {
       const o = oranges[i];
       const age = (now - o.born) / 1000;
@@ -314,16 +331,15 @@ function fxLoop() {
       o.rot += o.vr;
       const x = o.x0 + Math.sin(age * o.freq * Math.PI * 2 + o.phase) * o.amp;
       if (o.y > h * 0.86) o.life -= 0.035;
-      fxCtx.save();
+      const s = o.size * 1.08;
+      const half = s / 2;
       fxCtx.globalAlpha = Math.max(0, o.life);
-      fxCtx.translate(x, o.y);
+      fxCtx.setTransform(fxDpr, 0, 0, fxDpr, x, o.y);
       fxCtx.rotate(o.rot);
-      fxCtx.font = `${o.size}px serif`;
-      fxCtx.textAlign = 'center';
-      fxCtx.textBaseline = 'middle';
-      fxCtx.fillText(ORANGE_EMOJI, 0, 0);
-      fxCtx.restore();
+      fxCtx.drawImage(ORANGE_SPRITE, -half, -half, s, s);
     }
+    fxCtx.globalAlpha = 1;
+    fxCtx.setTransform(fxDpr, 0, 0, fxDpr, 0, 0);
     oranges = oranges.filter((o) => o.life > 0 && o.y < h + 90);
   }
 
