@@ -938,3 +938,6 @@ body{
 .rep-dict-cats .rep-cat{padding:6px 10px;border-radius:12px}
 .rep-dict-cats .rep-cat-head{font-size:12px}
 .rep-dict-cats .rep-cat-foot{font-size:10.5px}
+/* 원고지 칸을 조금 더 또렷하게 */
+.dcell{border:1px solid #f2c3dd;background:#fff}
+.dcell.space{background:transparent;border-color:transparent}

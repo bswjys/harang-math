@@ -291,10 +291,11 @@
       utter = u;
       listenMode = want;
       renderListen();
-      synth.speak(u);
-      if (window.playSound) playSound('tap');
       window.__dictSpeech = window.__dictSpeech || [];
       window.__dictSpeech.push({ text, lang: 'ko-KR', rate: u.rate, at: Date.now() });
+      /* iOS는 바로 이어서 speak하면 첫 소리가 씹히는 경우가 있어 아주 짧게 쉬었다 읽어요 */
+      setTimeout(() => { try { synth.speak(u); } catch (e) { listenMode = ''; renderListen(); } }, 60);
+      if (window.playSound) playSound('tap');
       return true;
     } catch (e) {
       listenMode = '';
