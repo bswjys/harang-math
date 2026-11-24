@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""공부하랑핑 검증: 모바일(390) / 태블릿 / PC 동작·레이아웃·소원·PWA"""
+"""공부하랑핑 검증: 모바일(390) / 태블릿 / PC 동작·레이아웃·소원·PWA + 5종 업그레이드
+(◀ 이전 문제, 🗣️ 읽어주기, 🎯 오늘 미션, 🌸 헷갈린 문제 복습, 📊 부모님 리포트)"""
 import http.server
 import socketserver
 import threading
@@ -246,7 +247,158 @@ def run():
         page.wait_for_timeout(200)
         log('효과음 다시 켜기', page.evaluate('window.__harang.state.sound') is True, '')
 
-        # 10) 콘솔 오류 / 넘침
+        # 10) ◀ 이전 문제 + 감 중복 지급 방지
+        page.evaluate('window.__harang.clearFx()')
+        page.evaluate('window.__harang.answerCorrect()')
+        page.wait_for_timeout(420)
+        page.evaluate('window.__harang.next()')
+        page.wait_for_timeout(320)
+        page.evaluate('window.__harang.answerCorrect()')
+        page.wait_for_timeout(480)
+        hist = page.evaluate('window.__harang.historyInfo')
+        orange_now = page.evaluate('window.__harang.state.orange')
+        page.click('#prevBtn')
+        page.wait_for_timeout(480)
+        prev_info = page.evaluate('window.__harang.historyInfo')
+        prev_view = page.evaluate("""() => ({
+            qnum: document.getElementById('qNum').textContent,
+            fb: !document.getElementById('feedback').hidden,
+            allDisabled: [...document.querySelectorAll('#answerGrid .answer-btn')].every(b => b.disabled),
+            correctMarked: !!document.querySelector('#answerGrid .answer-btn.correct'),
+            nextVisible: !document.getElementById('nextBtn').hidden
+        })""")
+        ok_prev = (prev_info['index'] == hist['index'] - 1 and prev_view['fb']
+                   and prev_view['allDisabled'] and prev_view['correctMarked'] and prev_view['nextVisible'])
+        log('◀ 이전 문제 되돌아가기', ok_prev,
+            f"{prev_view['qnum']} / 해설={prev_view['fb']} 잠금={prev_view['allDisabled']} 정답표시={prev_view['correctMarked']}")
+        shot(page, '15-이전문제-되돌아가기')
+        page.evaluate('window.__harang.answerCorrect()')
+        page.wait_for_timeout(350)
+        orange_prev = page.evaluate('window.__harang.state.orange')
+        log('이전 문제 감 중복 없음', orange_prev == orange_now, f'{orange_now} -> {orange_prev}')
+        page.click('#nextBtn')
+        page.wait_for_timeout(480)
+        back = page.evaluate('window.__harang.historyInfo')
+        log('▶ 다음 문제로 복귀', back['index'] == hist['index'] and orange_prev == orange_now,
+            f"index {back['index']}/{hist['index']} · orange {orange_prev}")
+
+        # 11) 🗣️ 문제 읽어주기
+        said = page.evaluate('window.__harang.readAloud()')
+        page.wait_for_timeout(700)
+        q_say = page.evaluate('window.__harang.current.say')
+        log('읽어주기 호출 (ko-KR)', bool(said) and said.get('lang') == 'ko-KR' and len(said.get('text') or '') > 5,
+            f"{said.get('lang')} · {(said.get('text') or '')[:34]}")
+        log('읽어주기 문장 = 문제 문장', (said or {}).get('text') == q_say, f"{(said or {}).get('text')} / {q_say}")
+        speech_err = [e for e in console_errors if 'speech' in e.lower()]
+        log('읽어주기 오류 없음', len(speech_err) == 0, ' / '.join(speech_err[:2]))
+
+        # 읽는 중에 다시 누르면 정지 (헤드리스에는 음성 엔진이 없어서 엔진만 대신함)
+        page.evaluate("""() => {
+            window.__t = {spoken: 0, cancels: 0};
+            const s = window.speechSynthesis;
+            s.speak = (u) => { window.__t.spoken += 1; window.__t.last = u.text; };
+            const c = s.cancel.bind(s);
+            s.cancel = () => { window.__t.cancels += 1; try { c(); } catch (e) {} };
+        }""")
+        page.click('#readBtn')
+        page.wait_for_timeout(300)
+        playing = page.evaluate("({label: document.getElementById('readBtn').textContent, active: window.__harang.speech.active, spoken: window.__t.spoken})")
+        log('읽는 중 버튼 = ⏹ 멈추기', playing['active'] and '멈추기' in playing['label'] and playing['spoken'] >= 1, str(playing))
+        shot(page, '16-읽어주기-재생', 350)
+        page.click('#readBtn')
+        page.wait_for_timeout(300)
+        stop1 = page.evaluate("({label: document.getElementById('readBtn').textContent, cancels: window.__harang.speech.cancels, active: window.__harang.speech.active})")
+        log('다시 눌러 정지', (not stop1['active']) and stop1['cancels'] >= 1 and '읽어주기' in stop1['label'], str(stop1))
+        page.click('#readBtn')
+        page.wait_for_timeout(300)
+        page.evaluate('window.__harang.next()')
+        page.wait_for_timeout(500)
+        after_next = page.evaluate("({cancels: window.__harang.speech.cancels, label: document.getElementById('readBtn').textContent, active: window.__harang.speech.active})")
+        log('다음 문제로 넘어가면 음성 정지', after_next['cancels'] >= 2 and (not after_next['active']) and '읽어주기' in after_next['label'], str(after_next))
+
+        # 12) 🎯 오늘의 미션 (하루 5문제)
+        page.evaluate('window.__harang.setTodaySolved(4)')
+        page.evaluate('window.__harang.clearFx()')
+        page.wait_for_timeout(300)
+        card_txt = page.inner_text('#missionCard')
+        log('오늘 미션 진행 표시 (4 / 5)', '4 / 5' in card_txt, card_txt.replace('\n', ' | ')[:70])
+        shot(page, '17-오늘미션-4문제', 900)
+        page.evaluate('window.__harang.answerCorrect()')
+        page.wait_for_timeout(1000)
+        m5 = page.evaluate('window.__harang.mission')
+        stars_on = page.evaluate("[...document.querySelectorAll('#missionStars .mstar')].filter(e => e.classList.contains('on')).length")
+        toast_txt = page.evaluate("document.getElementById('toast').hidden ? '' : document.getElementById('toast').textContent")
+        log('오늘 미션 5 / 5 달성', m5['solved'] >= 5 and m5['done'] and stars_on == 5 and '5 / 5' in page.inner_text('#missionCard'),
+            f"solved={m5['solved']} 별={stars_on} / {page.inner_text('#missionCard').replace(chr(10), ' ')[:46]}")
+        log('미션 성공 축하 토스트', '오늘 미션 성공' in toast_txt, toast_txt.strip())
+        shot(page, '18-오늘미션-성공축하', 500)
+
+        # 13) 🌸 헷갈린 문제 저장 → 복습 → 졸업
+        page.evaluate('window.__harang.next()')
+        page.wait_for_timeout(350)
+        w0 = page.evaluate('window.__harang.wrong')
+        wv = page.evaluate('window.__harang.wrongValue()')
+        page.evaluate(f'window.__harang.answer({json.dumps(wv)})')
+        page.wait_for_timeout(450)
+        w1 = page.evaluate('window.__harang.wrong')
+        btn_txt = page.inner_text('#reviewBtn')
+        log('오답 저장 (헷갈린 문제)', len(w1) == len(w0) + 1 and f'({len(w1)})' in btn_txt,
+            f'{len(w0)} -> {len(w1)} / {btn_txt}')
+        shot(page, '19-오답-헷갈린문제-저장')
+        page.evaluate('window.__harang.next()')
+        page.wait_for_timeout(450)
+        rv = page.evaluate('window.__harang.startReview()')
+        page.wait_for_timeout(450)
+        banner = page.evaluate("!document.getElementById('reviewBanner').hidden")
+        rv_type = page.evaluate('window.__harang.current.type')
+        log('헷갈린 문제 복습 모드 진입', rv['active'] and rv['mode'] == 'review' and banner and rv_type in {w['type'] for w in w1},
+            f"queue={rv['queue']} mode={rv['mode']} banner={banner} type={rv_type}")
+        shot(page, '20-헷갈린문제-복습모드')
+        before_n = len(page.evaluate('window.__harang.wrong'))
+        page.evaluate('window.__harang.answerCorrect()')
+        page.wait_for_timeout(600)
+        after_n = len(page.evaluate('window.__harang.wrong'))
+        fb_title = page.inner_text('#fbTitle')
+        log('복습 정답 → 오답 졸업 + 칭찬', after_n == before_n - 1 and '졸업' in fb_title, f'{before_n} -> {after_n} / {fb_title}')
+        shot(page, '21-복습-졸업칭찬')
+        for _ in range(14):
+            mode = page.evaluate('window.__harang.entry && window.__harang.entry.mode')
+            if mode != 'review':
+                break
+            page.evaluate('window.__harang.answerCorrect()')
+            page.wait_for_timeout(320)
+            page.evaluate('window.__harang.next()')
+            page.wait_for_timeout(380)
+        mode_after = page.evaluate('window.__harang.entry && window.__harang.entry.mode')
+        wrong_after = page.evaluate('window.__harang.wrong')
+        log('복습 끝 → 일반 모드 복귀', mode_after == 'normal' and len(wrong_after) == 0,
+            f'mode={mode_after} wrong={len(wrong_after)}')
+        review_btn = page.evaluate("({txt: document.getElementById('reviewBtn').textContent, dis: document.getElementById('reviewBtn').disabled})")
+        log('헷갈린 문제 0개 표시', review_btn['dis'] and '(0)' in review_btn['txt'], str(review_btn))
+        shot(page, '22-헷갈린문제-0개', 700)
+
+        # 14) 📊 부모님 미니 리포트
+        page.click('#reportBtn')
+        page.wait_for_timeout(700)
+        bars = page.evaluate('window.__harang.reportBars()')
+        rtext = page.evaluate('window.__harang.reportText()')
+        st = page.evaluate('window.__harang.state')
+        cats = [b['cat'] for b in bars]
+        log('리포트 단원별 막대 5개', len(bars) == 5 and cats == ['add', 'sub', 'num', 'clock', 'shape'], str(cats))
+        add = st['byCat'].get('add') or {}
+        expect_pct = f"{int(add['correct'] / add['solved'] * 100 + 0.5)}%" if add.get('solved') else '-'
+        log('리포트 정답률 계산', bars[0]['pct'] == expect_pct, f"{bars[0]['pct']} / 기대 {expect_pct}")
+        log('리포트 오늘/누적 요약', ('오늘 푼 문제' in rtext and '누적 푼 문제' in rtext
+                                  and f"{st['today']['solved']}문제" in rtext and f"{st['total']['solved']}문제" in rtext),
+            rtext[:48].replace('\n', ' '))
+        log('리포트 잘하는 것/연습할 것', '잘하는 것' in rtext and '연습' in rtext and '오늘 미션' in rtext,
+            rtext.replace('\n', ' ')[-70:])
+        shot(page, '23-부모님-리포트')
+        page.click('#reportDone')
+        page.wait_for_timeout(300)
+        log('리포트 닫기', page.evaluate("document.getElementById('reportModal').hidden"), '')
+
+        # 15) 콘솔 오류 / 넘침
         ov = overflow(page)
         log('가로 넘침 없음 (모바일 최종)', ov['sw'] <= ov['iw'] + 1, json.dumps(ov, ensure_ascii=False))
         log('콘솔 오류 0건', len(console_errors) == 0, ' / '.join(console_errors[:4]))

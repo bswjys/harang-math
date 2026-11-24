@@ -41,6 +41,18 @@ const LEVELS = [
   { at: 100, emoji: '🧚', name: '소원요정 하랑핑' }
 ];
 
+/* ---------- 단원 분류 (리포트용) ---------- */
+const CATEGORIES = [
+  { key: 'add',   name: '덧셈',      emoji: '➕', types: ['add1', 'make10', 'three', 'blankAdd'] },
+  { key: 'sub',   name: '뺄셈',      emoji: '➖', types: ['sub10', 'sub2', 'blankSub'] },
+  { key: 'num',   name: '수/비교',   emoji: '🔢', types: ['countNext', 'countBefore', 'countSeq', 'bundles', 'compare', 'hundred'] },
+  { key: 'clock', name: '시계',      emoji: '⏰', types: ['clock'] },
+  { key: 'shape', name: '모양/규칙', emoji: '🔺', types: ['pattern', 'shape'] }
+];
+const CAT_OF = {};
+CATEGORIES.forEach((c) => c.types.forEach((t) => { CAT_OF[t] = c.key; }));
+const catOf = (q) => CAT_OF[(q && q.type) || ''] || 'num';
+
 const PRAISES = [
   '김하랑 천재다! 🎉',
   '우와 하랑핑 최고야! 💖',
@@ -76,14 +88,16 @@ function todayKey() {
 
 function defaultState() {
   return {
-    v: 1,
+    v: 2,
     orange: 0,
     totalOrange: 0,
     journey: 1,
     sound: true,
     wishes: [],
-    today: { date: todayKey(), solved: 0, correct: 0, wrong: 0 },
+    today: { date: todayKey(), solved: 0, correct: 0, wrong: 0, missionDone: false },
     total: { solved: 0, correct: 0, wrong: 0 },
+    byCat: {},
+    wrongList: [],
     combo: 0,
     bestCombo: 0,
     seenLevel: 0
@@ -97,16 +111,19 @@ function loadState() {
     if (raw) {
       const saved = JSON.parse(raw);
       s = Object.assign(s, saved);
-      s.today = Object.assign({ date: todayKey(), solved: 0, correct: 0, wrong: 0 }, saved.today || {});
+      s.today = Object.assign({ date: todayKey(), solved: 0, correct: 0, wrong: 0, missionDone: false }, saved.today || {});
       s.total = Object.assign({ solved: 0, correct: 0, wrong: 0 }, saved.total || {});
       if (!Array.isArray(s.wishes)) s.wishes = [];
+      if (!Array.isArray(s.wrongList)) s.wrongList = [];
+      if (!s.byCat || typeof s.byCat !== 'object') s.byCat = {};
     }
   } catch (e) { /* 저장값이 깨져도 앱은 열려야 함 */ }
   if (s.today.date !== todayKey()) {
-    s.today = { date: todayKey(), solved: 0, correct: 0, wrong: 0 };
+    s.today = { date: todayKey(), solved: 0, correct: 0, wrong: 0, missionDone: false };
   }
   s.orange = Math.max(0, Math.min(100, Number(s.orange) || 0));
   s.journey = Math.max(1, Number(s.journey) || 1);
+  s.wrongList = s.wrongList.filter((w) => w && w.id && w.q).slice(-50);
   return s;
 }
 
@@ -258,6 +275,7 @@ gen(function genAdd1() {
   return {
     type: 'add1',
     tag: '더하기',
+    say: `${a} 더하기 ${b}는 얼마일까요?`,
     stage: eqLine(`${NF(a)} ${OP('+')} ${NF(b)} ${OP('=')} ${BLANK()}`),
     options: numberChoices(sum, 3),
     answer: String(sum),
@@ -279,6 +297,7 @@ gen(function genMake10() {
   return {
     type: 'make10',
     tag: '10이 되는 짝',
+    say: `${a}에 얼마를 더하면 십이 될까요? 빈 칸에 들어갈 수를 골라 주세요.`,
     stage: eqLine(`${NF(a)} ${OP('+')} ${BLANK()} ${OP('=')} ${NF(10)}`),
     options: numberChoices(b, 2),
     answer: String(b),
@@ -299,6 +318,7 @@ gen(function genSub10() {
   return {
     type: 'sub10',
     tag: '빼기',
+    say: `십에서 ${b}를 빼면 얼마가 남을까요?`,
     stage: eqLine(`${NF(10)} ${OP('-')} ${NF(b)} ${OP('=')} ${BLANK()}`),
     options: numberChoices(ans, 2),
     answer: String(ans),
@@ -323,6 +343,7 @@ gen(function genSub2() {
   return {
     type: 'sub2',
     tag: '빼기',
+    say: `${a}에서 ${b}를 빼면 얼마일까요?`,
     stage: eqLine(`${NF(a)} ${OP('-')} ${NF(b)} ${OP('=')} ${BLANK()}`),
     options: numberChoices(ans, 3, 4, 0),
     answer: String(ans),
@@ -346,6 +367,7 @@ gen(function genThree() {
   return {
     type: 'three',
     tag: '세 수의 계산',
+    say: `${a} 더하기 ${b} 더하기 ${c}는 얼마일까요?`,
     stage: eqLine(`${NF(a)} ${OP('+')} ${NF(b)} ${OP('+')} ${NF(c)} ${OP('=')} ${BLANK()}`, true),
     options: numberChoices(total, 3),
     answer: String(total),
@@ -369,6 +391,7 @@ gen(function genBlankAdd() {
   return {
     type: 'blankAdd',
     tag: '빈칸 채우기',
+    say: `네모에 들어갈 수는 무엇일까요? 네모 더하기 ${b}는 ${total}이에요.`,
     stage: eqLine(`${BLANK('□')} ${OP('+')} ${NF(b)} ${OP('=')} ${NF(total)}`),
     options: numberChoices(a, 2),
     answer: String(a),
@@ -390,6 +413,7 @@ gen(function genBlankSub() {
   return {
     type: 'blankSub',
     tag: '빈칸 채우기',
+    say: `${a}에서 얼마를 빼면 ${left}가 될까요?`,
     stage: eqLine(`${NF(a)} ${OP('-')} ${BLANK('□')} ${OP('=')} ${NF(left)}`, true),
     options: numberChoices(b, 2),
     answer: String(b),
@@ -411,6 +435,7 @@ gen(function genCountNext() {
   return {
     type: 'countNext',
     tag: '100까지의 수',
+    say: `${n} 바로 다음에 오는 수는 무엇일까요?`,
     stage: `${sentence("‘<span class='hl'>" + n + "</span>’ 바로 다음에 오는 수는?")}
       <div class="pattern-row" style="margin-top:6px">
         <div class="pattern-tile">${n}</div>
@@ -430,6 +455,7 @@ gen(function genCountBefore() {
   return {
     type: 'countBefore',
     tag: '100까지의 수',
+    say: `${n} 바로 앞에 오는 수는 무엇일까요?`,
     stage: `${sentence("‘<span class='hl'>" + n + "</span>’ 바로 앞에 오는 수는?")}
       <div class="pattern-row" style="margin-top:6px">
         <div class="pattern-tile q">?</div>
@@ -449,6 +475,7 @@ gen(function genCountSeq() {
   return {
     type: 'countSeq',
     tag: '100까지의 수',
+    say: `수를 이어서 써 볼까요? ${start}, ${start + 1}, 그다음에 오는 수는 무엇일까요?`,
     stage: `${sentence('수를 이어서 써 볼까요? 빈 곳에 알맞은 수는?')}
       <div class="pattern-row" style="margin-top:6px">
         <div class="pattern-tile">${start}</div>
@@ -475,6 +502,7 @@ gen(function genBundles() {
   return {
     type: 'bundles',
     tag: '10개씩 묶음',
+    say: `십 개씩 ${tens}묶음과 낱개 ${ones}개는 모두 몇 개일까요?`,
     stage: `${sentence('10개씩 묶음 <span class="hl">' + tens + '묶음</span>과 낱개 <span class="hl">' + ones + '개</span>는 모두 몇 개일까요?')}
       <div class="bundle-grid" style="margin-top:4px">${bundles}</div>
       <div class="loose-grid">${loose}</div>`,
@@ -495,6 +523,7 @@ gen(function genCompare() {
   return {
     type: 'compare',
     tag: '크기 비교',
+    say: `${a}하고 ${b}, 동그라미 안에 들어갈 기호를 골라 주세요.`,
     stage: `${sentence('○ 안에 들어갈 기호를 골라 주세요')}
       ${eqLine(`${NF(a)} <span class="blank" style="font-size:.75em">○</span> ${NF(b)}`, true)}`,
     options: ['>', '<', '='],
@@ -509,6 +538,7 @@ gen(function genHundred() {
   return {
     type: 'hundred',
     tag: '100까지의 수',
+    say: `십이 십 개 모이면 얼마일까요?`,
     stage: `${sentence('10이 <span class="hl">10개</span> 모이면 얼마일까요?')}
       <div class="bundle-grid" style="margin-top:4px">${Array.from({ length: 10 }, () => '<div class="bundle"><div class="dots">' + Array.from({ length: 10 }, () => '<i>💗</i>').join('') + '</div><div class="cap">10</div></div>').join('')}</div>`,
     options: ['90', '100', '110', '20'],
@@ -566,6 +596,7 @@ gen(function genClock() {
   return {
     type: 'clock',
     tag: '시계 보기',
+    say: `시계를 보고 몇 시인지 맞혀 보세요.`,
     stage: `${sentence('시계를 보고 몇 시인지 맞혀 보세요!')}${clockSVG(h, m)}`,
     options: shuffle([...set]),
     answer: ans,
@@ -588,6 +619,7 @@ gen(function genPattern() {
   return {
     type: 'pattern',
     tag: '규칙 찾기',
+    say: `무늬가 어떻게 되풀이되는지 보고, 물음표에 알맞은 것을 골라 주세요.`,
     stage: `${sentence('무늬가 어떻게 되풀이되는지 보고, ?에 알맞은 것은?')}
       <div class="pattern-row">${seq.map((e) => `<div class="pattern-tile">${e}</div>`).join('')}
       <div class="pattern-tile q">?</div></div>`,
@@ -616,6 +648,7 @@ gen(function genShape() {
   return {
     type: 'shape',
     tag: '여러 가지 모양',
+    say: `이 모양의 이름은 무엇일까요?`,
     stage: `${sentence('이 모양의 이름은 무엇일까요?')}${shapeSVG(kind)}`,
     options: shuffle(['동그라미', '세모', '네모']),
     answer: kind,
@@ -656,12 +689,20 @@ function makeQuestion() {
 }
 
 /* ---------- 화면 그리기 ---------- */
-let current = null;
+let current = null;          // 지금 화면에 그려진 문제
+let active = null;           // 지금 화면에 그려진 히스토리 항목
 let answered = false;
 let rewarded = false;
 let retried = false;
 let firstAttempt = true;
 let questionNo = 0;
+
+const history = [];          // 푼 문제 히스토리 (◀ 이전 문제)
+let hIndex = -1;
+const HISTORY_MAX = 40;
+
+let reviewActive = false;    // 🌸 헷갈린 문제 복습 모드
+let reviewQueue = [];
 
 const ui = {
   levelChip: $('levelChip'), levelEmoji: $('levelEmoji'), levelName: $('levelName'),
@@ -672,7 +713,14 @@ const ui = {
   feedback: $('feedback'), fbEmoji: $('fbEmoji'), fbTitle: $('fbTitle'), fbSub: $('fbSub'),
   fbExplain: $('fbExplain'), fbActions: $('fbActions'),
   soundBtn: $('soundBtn'), wishBoxBtn: $('wishBoxBtn'), wishBadge: $('wishBadge'),
-  wishModal: $('wishModal'), couponModal: $('couponModal')
+  wishModal: $('wishModal'), couponModal: $('couponModal'),
+  missionCard: $('missionCard'), missionCount: $('missionCount'), missionStars: $('missionStars'),
+  missionState: $('missionState'),
+  readBtn: $('readBtn'), prevBtn: $('prevBtn'), nextBtn: $('nextBtn'),
+  reviewBtn: $('reviewBtn'), reportBtn: $('reportBtn'),
+  reviewBanner: $('reviewBanner'), reviewLeft: $('reviewLeft'),
+  reportModal: $('reportModal'), reportBody: $('reportBody'), reportDate: $('reportDate'),
+  toast: $('toast')
 };
 
 function renderStatus(bump = false) {
@@ -721,20 +769,176 @@ function renderStatus(bump = false) {
     $('statCorrect').textContent = String(state.today.correct);
     $('statBest').textContent = String(state.bestCombo);
   }
+
+  renderMission();
+  renderReviewButton();
 }
 
-function renderQuestion(q) {
-  answered = false;
-  rewarded = false;
-  retried = false;
-  firstAttempt = true;
-  questionNo += 1;
-  current = q;
+/* ---------- 오늘의 미니 미션 ---------- */
+function renderMission() {
+  const solved = Math.max(0, Number(state.today.solved) || 0);
+  const shown = Math.min(5, solved);
+  const done = solved >= 5;
+  if (ui.missionCount) ui.missionCount.textContent = `${shown} / 5`;
+  if (ui.missionStars) {
+    [...ui.missionStars.children].forEach((el, i) => el.classList.toggle('on', i < shown));
+  }
+  if (ui.missionCard) ui.missionCard.classList.toggle('done', done);
+  if (ui.missionState) {
+    ui.missionState.textContent = done
+      ? '🌟 오늘 미션 성공! 하랑이 최고!'
+      : `${5 - solved}문제만 더 풀면 성공이에요`;
+  }
+}
 
+function celebrateMission() {
+  showToast('🌟', '오늘 미션 성공! 하랑이 최고!', 'gold', 4200);
+  playSound('level');
+  burst(44, true);
+  setTimeout(() => burst(28, true), 420);
+  if (ui.missionCard) {
+    ui.missionCard.classList.remove('sparkle');
+    void ui.missionCard.offsetWidth;
+    ui.missionCard.classList.add('sparkle');
+  }
+}
+
+function checkMission() {
+  if (state.today.solved >= 5 && !state.today.missionDone) {
+    state.today.missionDone = true;
+    saveState();
+    celebrateMission();
+  }
+}
+
+/* ---------- 토스트 ---------- */
+let toastTimer = null;
+function showToast(emoji, text, kind = '', ms = 2600) {
+  if (!ui.toast) return;
+  const em = $('toastEmoji');
+  const tx = $('toastText');
+  if (em) em.textContent = emoji || '✨';
+  if (tx) tx.textContent = text || '';
+  ui.toast.className = 'toast' + (kind ? ' ' + kind : '');
+  ui.toast.hidden = false;
+  ui.toast.style.animation = 'none';
+  void ui.toast.offsetWidth;
+  ui.toast.style.animation = '';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { ui.toast.hidden = true; }, ms);
+}
+
+/* ---------- 문제 읽어주기 (TTS) ---------- */
+let speechActive = false;
+let speechTimer = null;
+let lastSpeech = null;
+let speechCancels = 0;
+const speechRequests = [];
+
+function speechFallbackText(q) {
+  if (!q) return '';
+  const plain = String(q.stage || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return `${q.tag || ''} ${plain}`.trim();
+}
+
+function pickKoVoice(synth) {
+  try {
+    const voices = synth.getVoices() || [];
+    return voices.find((v) => /^ko([-_]|$)/i.test(v.lang || '')) || null;
+  } catch (e) { return null; }
+}
+
+function setReadBtn(on) {
+  if (!ui.readBtn) return;
+  ui.readBtn.textContent = on ? '⏹ 멈추기' : '🗣️ 읽어주기';
+  ui.readBtn.classList.toggle('reading', !!on);
+  ui.readBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+
+function stopSpeech(count = true) {
+  const synth = window.speechSynthesis;
+  if (speechActive && synth) {
+    try { synth.cancel(); } catch (e) { /* 정지 실패는 넘어감 */ }
+    if (count) speechCancels += 1;
+  }
+  clearTimeout(speechTimer);
+  speechTimer = null;
+  speechActive = false;
+  setReadBtn(false);
+}
+
+function speakQuestion() {
+  const synth = window.speechSynthesis;
+  const Utter = window.SpeechSynthesisUtterance;
+  if (!synth || typeof Utter !== 'function') {
+    showToast('🗣️', '이 브라우저에서는 읽어주기를 쓸 수 없어요', '', 2800);
+    return;
+  }
+  if (speechActive) { stopSpeech(); return; }
+
+  const q = current;
+  const text = (q && (q.say || speechFallbackText(q))) || '문제를 읽어 줄게요!';
+  try {
+    const u = new Utter(text);
+    u.lang = 'ko-KR';
+    u.rate = 0.9;
+    u.pitch = 1.15;
+    const voice = pickKoVoice(synth);
+    if (voice) u.voice = voice;
+    u.onend = () => stopSpeech(false);
+    u.onerror = () => stopSpeech(false);
+    lastSpeech = { text, lang: 'ko-KR', rate: 0.9, at: Date.now() };
+    speechRequests.push({ text, lang: 'ko-KR' });
+    speechActive = true;
+    setReadBtn(true);
+    synth.speak(u);
+    clearTimeout(speechTimer);
+    speechTimer = setTimeout(() => stopSpeech(false), Math.min(25000, 1600 + text.length * 270));
+  } catch (e) {
+    speechActive = false;
+    setReadBtn(false);
+    showToast('🗣️', '읽어주기를 시작하지 못했어요', '', 2400);
+  }
+}
+
+/* ---------- 문제 / 히스토리 ---------- */
+function newQuestion(q, mode) {
+  const entry = {
+    q,
+    mode: mode || 'normal',
+    no: ++questionNo,
+    answered: false,
+    chosen: null,
+    correct: null,
+    rewarded: false,
+    retried: false,
+    counted: false
+  };
+  history.push(entry);
+  if (history.length > HISTORY_MAX) history.shift();
+  hIndex = history.length - 1;
+  renderEntry(entry);
+  renderStatus();
+  return entry;
+}
+
+function renderQuestion(q) { return newQuestion(q, 'normal'); }   // 예전 이름 유지
+
+function renderEntry(entry) {
+  active = entry;
+  current = entry.q;
+  answered = !!entry.answered;
+  rewarded = !!entry.rewarded;
+  retried = !!entry.retried;
+  firstAttempt = !entry.counted;
+  stopSpeech();
+
+  const q = entry.q;
   ui.qTag.textContent = q.tag;
-  ui.qNum.textContent = `${questionNo}번째 문제`;
+  ui.qNum.textContent = `${entry.no}번째 문제`;
   ui.stage.innerHTML = q.stage;
   ui.feedback.hidden = true;
+  ui.feedback.className = 'feedback';
 
   const symbolOnly = q.options.every((o) => ['>', '<', '='].includes(o));
   ui.answerGrid.className = 'answers ' + (q.options.length === 3 ? 'three' : q.options.length === 4 ? 'four' : '') + (symbolOnly ? ' symbols' : '');
@@ -746,6 +950,11 @@ function renderQuestion(q) {
     b.dataset.value = opt;
     b.textContent = opt;
     b.addEventListener('click', () => onAnswer(opt, b));
+    if (entry.answered) {
+      b.disabled = true;
+      if (opt === q.answer) b.classList.add('correct');
+      else if (opt === entry.chosen) b.classList.add('wrong');
+    }
     ui.answerGrid.appendChild(b);
   });
 
@@ -753,14 +962,71 @@ function renderQuestion(q) {
     ui.hintRow.hidden = false;
     ui.hintBtn.textContent = q.hint.label || '그림 힌트 보기 🍬';
     ui.hintBtn.disabled = false;
-    ui.hintArea.hidden = true;
-    ui.hintArea.innerHTML = '';
   } else {
     ui.hintRow.hidden = true;
-    ui.hintArea.hidden = true;
-    ui.hintArea.innerHTML = '';
   }
+  ui.hintArea.hidden = true;
+  ui.hintArea.innerHTML = '';
+
+  const inReview = entry.mode === 'review';
+  if (ui.reviewBanner) ui.reviewBanner.hidden = !inReview;
+  if (inReview && ui.reviewLeft) {
+    ui.reviewLeft.textContent = reviewQueue.length ? `${reviewQueue.length}문제 더 있어요` : '마지막 문제예요';
+  }
+
+  setReadBtn(false);
+  renderNav();
+
+  if (entry.answered) showFeedback(entry.correct);
 }
+
+function renderNav() {
+  if (!ui.prevBtn) return;
+  const canPrev = hIndex > 0;
+  ui.prevBtn.disabled = !canPrev;
+  ui.prevBtn.classList.toggle('off', !canPrev);
+  if (ui.nextBtn) ui.nextBtn.hidden = !(hIndex < history.length - 1);
+}
+
+function goForward() {
+  if (hIndex >= history.length - 1) return false;
+  hIndex += 1;
+  renderEntry(history[hIndex]);
+  playSound('tap');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return true;
+}
+
+function goBack() {
+  if (hIndex <= 0) return false;
+  hIndex -= 1;
+  renderEntry(history[hIndex]);
+  playSound('tap');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return true;
+}
+
+function goNext() {
+  if (hIndex < history.length - 1) { return goForward(); }
+  if (reviewActive) { nextReview(); return true; }
+  newQuestion(makeQuestion());
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return true;
+}
+
+/* ---------- 채점 ---------- */
+function rollDayIfNeeded() {
+  if (state.today.date === todayKey()) return false;
+  state.today = { date: todayKey(), solved: 0, correct: 0, wrong: 0, missionDone: false };
+  state.combo = 0;
+  saveState();
+  renderMission();
+  return true;
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) { rollDayIfNeeded(); renderStatus(); }
+});
 
 function floatPlus() {
   const el = document.createElement('div');
@@ -813,18 +1079,28 @@ function markButtons(answer) {
 }
 
 function onAnswer(value, btn) {
-  if (answered) return;
-  answered = true;
+  if (!active || answered || active.answered) return;
+  rollDayIfNeeded();
+  const entry = active;
   const correct = value === current.answer;
-  const wasFirst = firstAttempt;
-  firstAttempt = false;
+
+  const wasFirst = !entry.counted;
+  entry.answered = true;
+  entry.chosen = value;
+  entry.correct = correct;
+  answered = true;
 
   if (wasFirst) {
+    entry.counted = true;
     state.today.solved += 1;
     state.total.solved += 1;
+    const key = catOf(current);
+    const rec = state.byCat[key] || (state.byCat[key] = { solved: 0, correct: 0 });
+    rec.solved += 1;
     if (correct) {
       state.today.correct += 1;
       state.total.correct += 1;
+      rec.correct += 1;
     } else {
       state.today.wrong += 1;
       state.total.wrong += 1;
@@ -838,7 +1114,9 @@ function onAnswer(value, btn) {
       state.combo += 1;
       state.bestCombo = Math.max(state.bestCombo, state.combo);
     }
-    if (!rewarded) {
+    const graduated = forgetWrong(current);
+    if (!entry.rewarded) {
+      entry.rewarded = true;
       rewarded = true;
       showFeedback(true);
       playSound('correct');
@@ -848,28 +1126,40 @@ function onAnswer(value, btn) {
       showFeedback(true);
       playSound('correct');
     }
+    if (graduated && entry.mode === 'review') {
+      showToast('🌸', '헷갈린 문제 졸업! 이제 잘할 수 있어요', 'mint', 3000);
+      burst(20, false);
+    }
   } else {
     btn.classList.add('wrong');
     markButtons(current.answer);
     state.combo = 0;
+    if (wasFirst) rememberWrong(current);
     playSound('wrong');
     showFeedback(false);
   }
+
+  if (wasFirst) checkMission();
   renderStatus();
   saveState();
 }
 
 function showFeedback(good) {
+  const entry = active;
   const fb = ui.feedback;
   fb.hidden = false;
   fb.className = 'feedback ' + (good ? 'good' : 'bad');
 
   if (good) {
     ui.fbEmoji.textContent = pick(['🎉', '💖', '🌟', '🥳', '✨']);
-    ui.fbTitle.textContent = retried ? '다시 해내다니 정말 멋져, 김하랑! 💪' : pick(PRAISES);
-    ui.fbSub.textContent = retried
+    ui.fbTitle.textContent = entry && entry.retried ? '다시 해내다니 정말 멋져, 김하랑! 💪' : pick(PRAISES);
+    ui.fbSub.textContent = entry && entry.retried
       ? '포기하지 않고 맞혔어요! 감 1개를 모았어요 🍊'
       : '정답이에요! 감 1개를 모았어요 🍊';
+    if (entry && entry.mode === 'review' && !isWrongStill()) {
+      ui.fbTitle.textContent = '헷갈린 문제 졸업! 정말 멋져 김하랑! 🎓';
+      ui.fbSub.textContent = '이제 이 문제는 안 틀릴 거예요! 감 1개도 받았어요 🍊';
+    }
   } else {
     ui.fbEmoji.textContent = pick(['🌸', '💗', '🫶', '🌈']);
     ui.fbTitle.textContent = pick(ENCOURAGES);
@@ -879,26 +1169,21 @@ function showFeedback(good) {
   ui.fbExplain.innerHTML = `<b>해설</b> · ${current.explain}`;
   ui.fbActions.innerHTML = '';
 
-  if (good) {
-    const next = document.createElement('button');
-    next.className = 'btn btn-primary';
-    next.type = 'button';
-    next.textContent = '다음 문제 💖';
-    next.addEventListener('click', () => {
-      playSound('tap');
-      renderQuestion(makeQuestion());
-      renderStatus();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    ui.fbActions.appendChild(next);
-  } else {
+  const isLatest = hIndex === history.length - 1;
+
+  if (!good && isLatest && entry && !entry.rewarded) {
     const retry = document.createElement('button');
     retry.className = 'btn btn-soft';
     retry.type = 'button';
+    retry.id = 'fbRetryBtn';
     retry.textContent = '다시 풀어보기 💪';
     retry.addEventListener('click', () => {
-      retried = true;
+      entry.retried = true;
+      entry.answered = false;
+      entry.chosen = null;
+      entry.correct = null;
       answered = false;
+      retried = true;
       ui.feedback.hidden = true;
       [...ui.answerGrid.children].forEach((b) => {
         b.disabled = false;
@@ -911,28 +1196,227 @@ function showFeedback(good) {
     const moveOn = document.createElement('button');
     moveOn.className = 'btn btn-primary';
     moveOn.type = 'button';
+    moveOn.id = 'fbMoveOnBtn';
     moveOn.textContent = '알겠어요! 다음 문제 🌸';
     moveOn.addEventListener('click', () => {
-      if (!rewarded) {
+      if (entry && !entry.rewarded) {
+        entry.rewarded = true;
         rewarded = true;
-        const fbSub = ui.fbSub;
-        fbSub.textContent = '끝까지 해설을 본 것도 공부예요! 노력 감 1개를 드려요 🍊';
+        ui.fbSub.textContent = '끝까지 해설을 본 것도 공부예요! 노력 감 1개를 드려요 🍊';
         addOrange(1);
       }
       playSound('tap');
-      renderQuestion(makeQuestion());
-      renderStatus();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      goNext();
     });
 
     ui.fbActions.appendChild(retry);
     ui.fbActions.appendChild(moveOn);
+  } else {
+    const next = document.createElement('button');
+    next.className = 'btn btn-primary';
+    next.type = 'button';
+    next.id = 'fbNextBtn';
+    if (!isLatest) {
+      next.textContent = '다음 문제 ▶';
+      next.addEventListener('click', () => { goForward(); });
+    } else if (reviewActive) {
+      next.textContent = reviewQueue.length ? '다음 복습 문제 🌸' : '복습 끝! 새 문제 💖';
+      next.addEventListener('click', () => { playSound('tap'); goNext(); });
+    } else {
+      next.textContent = '다음 문제 💖';
+      next.addEventListener('click', () => { playSound('tap'); goNext(); });
+    }
+    ui.fbActions.appendChild(next);
   }
 
   const r = fb.getBoundingClientRect();
   if (r.top > window.innerHeight * 0.55) {
     fb.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
+
+/* ---------- 🌸 헷갈린 문제 (오답 복습) ---------- */
+function wrongKey(q) {
+  return `${q.type}|${q.stage}`;
+}
+
+function isWrongStill() {
+  return !!current && state.wrongList.some((w) => w.id === wrongKey(current));
+}
+
+function rememberWrong(q) {
+  const key = wrongKey(q);
+  const found = state.wrongList.find((w) => w.id === key);
+  if (found) {
+    found.misses = (Number(found.misses) || 1) + 1;
+    found.at = Date.now();
+  } else {
+    state.wrongList.push({
+      id: key,
+      type: q.type,
+      cat: catOf(q),
+      q: {
+        type: q.type,
+        tag: q.tag,
+        say: q.say || '',
+        stage: q.stage,
+        options: q.options.slice(),
+        answer: q.answer,
+        explain: q.explain,
+        hint: q.hint || null
+      },
+      misses: 1,
+      at: Date.now()
+    });
+    if (state.wrongList.length > 50) state.wrongList.shift();
+  }
+  saveState();
+  renderReviewButton();
+}
+
+function forgetWrong(q) {
+  const key = wrongKey(q);
+  const i = state.wrongList.findIndex((w) => w.id === key);
+  if (i < 0) return false;
+  state.wrongList.splice(i, 1);
+  saveState();
+  renderReviewButton();
+  return true;
+}
+
+function renderReviewButton() {
+  if (!ui.reviewBtn) return;
+  const n = state.wrongList.length;
+  ui.reviewBtn.textContent = `🌸 헷갈린 문제 (${n})`;
+  ui.reviewBtn.disabled = n === 0;
+  ui.reviewBtn.classList.toggle('off', n === 0);
+  ui.reviewBtn.title = n ? '틀린 문제만 모아서 다시 풀어 봐요' : '틀린 문제가 없어요!';
+  ui.reviewBtn.setAttribute('aria-label', n ? `헷갈린 문제 ${n}개 다시 풀기` : '틀린 문제가 없어요');
+}
+
+function startReview() {
+  if (!state.wrongList.length) {
+    showToast('🌸', '틀린 문제가 없어요! 최고예요', '', 2600);
+    return;
+  }
+  closeModals();
+  reviewActive = true;
+  reviewQueue = shuffle(state.wrongList.map((w) => w.id));
+  playSound('tap');
+  nextReview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextReview() {
+  while (reviewQueue.length) {
+    const id = reviewQueue.shift();
+    const w = state.wrongList.find((x) => x.id === id);
+    if (w) {
+      newQuestion(w.q, 'review');
+      return true;
+    }
+  }
+  reviewActive = false;
+  reviewQueue = [];
+  showToast('🌸', '헷갈린 문제를 모두 풀었어요! 최고예요', 'mint', 3200);
+  burst(24, false);
+  newQuestion(makeQuestion());
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return true;
+}
+
+function endReview() {
+  reviewActive = false;
+  reviewQueue = [];
+  showToast('🌸', '복습을 그만하고 새 문제를 풀어요', '', 2400);
+  newQuestion(makeQuestion());
+  renderStatus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- 📊 부모님 미니 리포트 ---------- */
+function pctOf(correct, solved) {
+  if (!solved) return 0;
+  return Math.max(0, Math.min(100, Math.round((correct / solved) * 100)));
+}
+
+function byCatGet(key) {
+  const r = state.byCat[key];
+  return { solved: Number(r && r.solved) || 0, correct: Number(r && r.correct) || 0 };
+}
+
+function koreanToday() {
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const d = new Date();
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+}
+
+function renderReport() {
+  if (!ui.reportBody) return;
+  const t = state.today;
+  const tot = state.total;
+  const todayRate = pctOf(t.correct, t.solved);
+  const totalRate = pctOf(tot.correct, tot.solved);
+  const missionShown = Math.min(5, t.solved);
+  const missionDone = t.solved >= 5;
+
+  const rows = CATEGORIES.map((c) => {
+    const r = byCatGet(c.key);
+    const p = pctOf(r.correct, r.solved);
+    return `<div class="rep-cat" data-cat="${c.key}">
+        <div class="rep-cat-head"><span>${c.emoji} ${c.name}</span><b>${r.solved ? p + '%' : '–'}</b></div>
+        <div class="rep-bar"><i style="width:${r.solved ? Math.max(p, 5) : 0}%"></i></div>
+        <p class="rep-cat-foot">${r.solved ? `${r.solved}문제 중 ${r.correct}개 정답` : '아직 안 풀었어요'}</p>
+      </div>`;
+  }).join('');
+
+  const scored = CATEGORIES
+    .map((c) => {
+      const r = byCatGet(c.key);
+      return { name: c.name, emoji: c.emoji, solved: r.solved, correct: r.correct, rate: pctOf(r.correct, r.solved) };
+    })
+    .filter((c) => c.solved > 0)
+    .sort((a, b) => (b.rate - a.rate) || (b.solved - a.solved));
+
+  let good = '아직 기록이 없어요. 문제를 몇 개 풀면 알려 줄게요 🌱';
+  let practice = '모든 단원을 골고루 풀어 보면 더 좋아요!';
+  if (scored.length) {
+    const best = scored[0];
+    const worst = scored[scored.length - 1];
+    good = `${best.emoji} ${best.name} ${best.rate}% · ${best.solved}문제 중 ${best.correct}개 정답`;
+    if (scored.length > 1 && worst.rate < 80) {
+      practice = `${worst.emoji} ${worst.name} ${worst.rate}% · 조금만 더 연습해 보면 좋아요`;
+    } else {
+      practice = '모든 단원을 골고루 잘하고 있어요! 🌈';
+    }
+  }
+
+  ui.reportBody.innerHTML = `
+    <div class="rep-grid">
+      <div class="rep-stat"><span>오늘 푼 문제</span><b>${t.solved}문제</b></div>
+      <div class="rep-stat"><span>오늘 정답률</span><b>${t.solved ? todayRate + '%' : '–'}</b></div>
+      <div class="rep-stat"><span>오늘 미션</span><b class="${missionDone ? 'ok' : ''}">${missionDone ? '달성 🌟' : missionShown + ' / 5'}</b></div>
+    </div>
+    <div class="rep-grid">
+      <div class="rep-stat"><span>누적 푼 문제</span><b>${tot.solved}문제</b></div>
+      <div class="rep-stat"><span>누적 정답률</span><b>${tot.solved ? totalRate + '%' : '–'}</b></div>
+      <div class="rep-stat"><span>헷갈린 문제</span><b>${state.wrongList.length}개</b></div>
+    </div>
+    <h3 class="rep-h">단원별 정답률</h3>
+    <div class="rep-cats">${rows}</div>
+    <div class="rep-summary">
+      <p class="rep-good"><b>하랑이가 잘하는 것</b><span>${good}</span></p>
+      <p class="rep-practice"><b>조금 더 연습하면 좋은 것</b><span>${practice}</span></p>
+    </div>
+    <p class="rep-note">${t.solved >= 5 ? '오늘 미니 미션 성공! 칭찬해 주세요 💖' : '5문제를 풀면 오늘 미니 미션이 성공해요 🌟'}</p>`;
+  if (ui.reportDate) ui.reportDate.textContent = koreanToday();
+}
+
+function openReport() {
+  renderReport();
+  ui.reportModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  playSound('tap');
 }
 
 /* ---------- 소원 ---------- */
@@ -1050,6 +1534,7 @@ function startNewJourney() {
 function closeModals() {
   ui.wishModal.hidden = true;
   ui.couponModal.hidden = true;
+  if (ui.reportModal) ui.reportModal.hidden = true;
   document.body.style.overflow = '';
 }
 
@@ -1143,6 +1628,21 @@ ui.soundBtn.addEventListener('click', () => {
   if (state.sound) { playSound('tap'); setTimeout(() => playSound('correct'), 120); }
 });
 
+/* 🗣️ 문제 읽어주기 */
+if (ui.readBtn) ui.readBtn.addEventListener('click', speakQuestion);
+
+/* ◀ 이전 문제 / 다음 문제 ▶ */
+if (ui.prevBtn) ui.prevBtn.addEventListener('click', goBack);
+if (ui.nextBtn) ui.nextBtn.addEventListener('click', goForward);
+
+/* 🌸 헷갈린 문제 복습 */
+if (ui.reviewBtn) ui.reviewBtn.addEventListener('click', startReview);
+const reviewExitBtn = $('reviewExit');
+if (reviewExitBtn) reviewExitBtn.addEventListener('click', endReview);
+
+/* 📊 리포트 */
+if (ui.reportBtn) ui.reportBtn.addEventListener('click', openReport);
+
 ui.wishBoxBtn.addEventListener('click', () => {
   playSound('tap');
   renderCoupons();
@@ -1156,6 +1656,11 @@ $('wishSaveBtn').addEventListener('click', saveWish);
 $('wishCloseBtn').addEventListener('click', closeModals);
 wishInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveWish(); });
 ui.wishModal.addEventListener('click', (e) => { if (e.target === ui.wishModal) closeModals(); });
+if (ui.reportModal) {
+  $('reportClose').addEventListener('click', closeModals);
+  $('reportDone').addEventListener('click', closeModals);
+  ui.reportModal.addEventListener('click', (e) => { if (e.target === ui.reportModal) closeModals(); });
+}
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeModals();
@@ -1164,6 +1669,8 @@ document.addEventListener('keydown', (e) => {
 /* ---------- 시작 ---------- */
 renderStatus();
 renderQuestion(makeQuestion());
+renderMission();
+renderReviewButton();
 if (state.orange >= 100 && !currentJourneyWish()) {
   setTimeout(() => openWishModal(false), 700);
 }
@@ -1191,12 +1698,14 @@ if (new URLSearchParams(location.search).get('test') === '1') {
       return b ? b.dataset.value : null;
     },
     next() {
-      const btn = [...ui.fbActions.querySelectorAll('button')].find((b) => /다음 문제/.test(b.textContent));
-      if (btn) btn.click();
-      return !!btn;
+      const b = ui.fbActions.querySelector('#fbNextBtn')
+        || [...ui.fbActions.querySelectorAll('button')].find((x) => /다음 문제/.test(x.textContent));
+      if (b) b.click();
+      return !!b;
     },
     retry() {
-      const btn = [...ui.fbActions.querySelectorAll('button')].find((b) => /다시 풀어보기/.test(b.textContent));
+      const btn = ui.fbActions.querySelector('#fbRetryBtn')
+        || [...ui.fbActions.querySelectorAll('button')].find((b) => /다시 풀어보기/.test(b.textContent));
       if (btn) btn.click();
       return !!btn;
     },
@@ -1204,6 +1713,39 @@ if (new URLSearchParams(location.search).get('test') === '1') {
       state.orange = n;
       saveState();
       renderStatus();
+    },
+    /* --- 5종 업그레이드용 확인 도구 --- */
+    get entry() { return active; },
+    get historyInfo() { return { len: history.length, index: hIndex, no: active ? active.no : 0, mode: active ? active.mode : null }; },
+    prev() { return goBack(); },
+    forward() { return goForward(); },
+    goNext() { return goNext(); },
+    nextId() {
+      const b = ui.fbActions.querySelector('button');
+      return b ? b.id : '';
+    },
+    readAloud() { speakQuestion(); return lastSpeech; },
+    get speech() { return { active: speechActive, cancels: speechCancels, last: lastSpeech, requests: speechRequests.slice(-5) }; },
+    get mission() { return { solved: state.today.solved, done: !!state.today.missionDone, shown: (ui.missionCount || {}).textContent || '' }; },
+    setTodaySolved(n) {
+      state.today.solved = Math.max(0, Number(n) || 0);
+      state.today.correct = Math.min(state.today.correct, state.today.solved);
+      state.today.missionDone = state.today.solved >= 5 && state.today.missionDone;
+      saveState();
+      renderStatus();
+    },
+    get wrong() { return state.wrongList.map((w) => ({ id: w.id, type: w.type, misses: w.misses })); },
+    get byCat() { return JSON.parse(JSON.stringify(state.byCat)); },
+    startReview() { startReview(); return { active: reviewActive, queue: reviewQueue.length, mode: active ? active.mode : null }; },
+    endReview() { endReview(); },
+    openReport() { openReport(); return true; },
+    reportText() { return ui.reportBody ? ui.reportBody.innerText : ''; },
+    reportBars() {
+      return [...ui.reportBody.querySelectorAll('.rep-cat')].map((el) => ({
+        cat: el.dataset.cat,
+        pct: el.querySelector('.rep-cat-head b').textContent,
+        width: el.querySelector('.rep-bar i').style.width
+      }));
     },
     openWish() { openWishModal(false); },
     coupons() { renderCoupons(); ui.couponModal.hidden = false; document.body.style.overflow = 'hidden'; },

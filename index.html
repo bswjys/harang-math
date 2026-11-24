@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
 
@@ -65,13 +65,33 @@
 </header>
 
 <main class="app">
+  <section class="mission-card" id="missionCard" aria-label="오늘의 미니 미션">
+    <div class="mission-head">
+      <span class="mission-emoji" aria-hidden="true">🎯</span>
+      <span class="mission-title">오늘 미션</span>
+      <span class="mission-count"><b id="missionCount">0 / 5</b> 🌟</span>
+    </div>
+    <div class="mission-stars" id="missionStars" aria-hidden="true">
+      <span class="mstar">★</span><span class="mstar">★</span><span class="mstar">★</span><span class="mstar">★</span><span class="mstar">★</span>
+    </div>
+    <p class="mission-state" id="missionState">5문제만 더 풀면 성공이에요</p>
+  </section>
+
   <section class="card question-card" id="questionCard">
+    <div class="review-banner" id="reviewBanner" hidden>
+      <span class="rb-text">🌸 헷갈린 문제 복습 중! <b id="reviewLeft"></b></span>
+      <button class="rb-exit" id="reviewExit" type="button">그만 풀기</button>
+    </div>
     <div class="qmeta">
       <span class="tag" id="qTag">더하기</span>
       <span class="qnum" id="qNum">1번째 문제</span>
     </div>
 
     <div class="stage" id="questionStage"></div>
+
+    <div class="read-row">
+      <button class="read-btn" id="readBtn" type="button" aria-pressed="false">🗣️ 읽어주기</button>
+    </div>
 
     <div class="answers" id="answerGrid"></div>
 
@@ -91,6 +111,11 @@
       <div class="fb-explain" id="fbExplain"></div>
       <div class="fb-actions" id="fbActions"></div>
     </div>
+
+    <div class="qnav" id="qnav">
+      <button class="qnav-btn" id="prevBtn" type="button">◀ 이전 문제</button>
+      <button class="qnav-btn" id="nextBtn" type="button" hidden>다음 문제 ▶</button>
+    </div>
   </section>
 
   <section class="mini-stats" aria-label="오늘의 공부 기록">
@@ -98,6 +123,11 @@
     <div><span class="ms-emoji">✅</span><b id="statCorrect">0</b>맞힌 문제</div>
     <div><span class="ms-emoji">🔥</span><b id="statBest">0</b>최고 콤보</div>
   </section>
+
+  <div class="record-actions">
+    <button class="rec-btn" id="reviewBtn" type="button">🌸 헷갈린 문제 (0)</button>
+    <button class="rec-btn" id="reportBtn" type="button">📊 리포트</button>
+  </div>
 
   <p class="foot-note">틀려도 괜찮아! 해설을 보면 머리가 반짝반짝 좋아져요 ✨</p></main>
 
@@ -145,6 +175,23 @@
   </div>
 </div>
 
-<script src="app.js"></script>
+<!-- 📊 부모님 미니 리포트 -->
+<div class="modal" id="reportModal" hidden>
+  <div class="modal-card report-card" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+    <button class="modal-x" id="reportClose" type="button" aria-label="닫기">✕</button>
+    <h2 id="reportTitle">📊 하랑이 공부 리포트</h2>
+    <p class="modal-lead small-lead" id="reportDate"></p>
+    <div class="report-body" id="reportBody"></div>
+    <button class="btn btn-primary big" id="reportDone" type="button">닫기 💖</button>
+  </div>
+</div>
+
+<!-- 영역 토스트 -->
+<div class="toast" id="toast" role="status" hidden>
+  <span class="toast-emoji" id="toastEmoji">✨</span>
+  <span class="toast-text" id="toastText"></span>
+</div>
+
+<script src="app.js?v=2"></script>
 </body>
 </html>
