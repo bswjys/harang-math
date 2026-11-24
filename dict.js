@@ -341,11 +341,11 @@
     a.preload = 'auto';
     applyRate(a, slow);
     /* iOS Safari는 재생이 시작될 때 재생 속도를 1.0으로 되돌리는 경우가 있어 한 번 더 잡아 줌 */
-    a.onloadedmetadata = () => applyRate(a, slow);
-    a.onplaying = () => applyRate(a, slow);
-    a.onended = () => { if (listenMode === want) { audioEl = null; resetListen(); } };
+    a.onloadedmetadata = () => { if (audioEl === a) applyRate(a, slow); };
+    a.onplaying = () => { if (audioEl === a) applyRate(a, slow); };
+    a.onended = () => { if (audioEl === a && listenMode === want) { audioEl = null; resetListen(); } };
     a.onerror = () => {
-      if (listenMode !== want) return;
+      if (audioEl !== a || listenMode !== want) return;   /* 이미 fallback으로 넘어감 */
       audioEl = null;
       resetListen();
       speakFallback(slow, want, text, 'mp3-error');
@@ -358,7 +358,7 @@
     try { p = a.play(); } catch (e) { p = null; }
     if (p && typeof p.catch === 'function') {
       p.catch(() => {
-        if (listenMode !== want) return;
+        if (audioEl !== a || listenMode !== want) return;   /* onerror에서 이미 처리했으면 그대로 */
         audioEl = null;
         resetListen();
         speakFallback(slow, want, text, 'play-rejected');
