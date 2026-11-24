@@ -1,12 +1,12 @@
 /* 공부하랑핑 service worker — 오프라인에서도 열려요 */
-const CACHE = 'harang-math-v5';
+const CACHE = 'harang-math-v6';
 const ASSETS = [
   './',
   'index.html',
-  'styles.css?v=5',
-  'app.js?v=5',
-  'dict-data.js?v=5',
-  'dict.js?v=5',
+  'styles.css?v=6',
+  'app.js?v=6',
+  'dict-data.js?v=6',
+  'dict.js?v=6',
   'fonts/HarangSans.woff',
   'manifest.webmanifest',
   'icons/icon-192.png',

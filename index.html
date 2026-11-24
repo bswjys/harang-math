@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 
@@ -48,10 +48,11 @@
         <span class="chip-emoji" id="levelEmoji">🌱</span>
         <span id="levelName">새싹 하랑핑</span>
       </button>
-      <div class="chip orange" id="orangeChip">
-        <span class="orange-emoji">🍊</span>
+      <button class="chip orange orange-badge" id="orangeChip" type="button" aria-label="감 배지 — 누르면 감이 우수수 떨어져요">
+        <span class="orange-emoji" aria-hidden="true">🍊</span>
         <span id="orangeCount">0</span><span class="slash">/</span><span>100</span>
-      </div>
+        <span class="orange-spark" aria-hidden="true">✨</span>
+      </button>
       <span class="combo" id="comboChip" hidden>🔥 콤보 2</span>
     </div>
     <div class="progress" role="progressbar" aria-label="감 모은 개수" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressOuter">
@@ -322,8 +323,8 @@
   <span class="toast-text" id="toastText"></span>
 </div>
 
-<script src="app.js?v=5"></script>
-<script src="dict-data.js?v=5"></script>
-<script src="dict.js?v=5"></script>
+<script src="app.js?v=6"></script>
+<script src="dict-data.js?v=6"></script>
+<script src="dict.js?v=6"></script>
 </body>
 </html>

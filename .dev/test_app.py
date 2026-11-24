@@ -108,6 +108,44 @@ def run():
             f"disabled={first_nav['disabled']} off={first_nav['off']} / 토스트=\"{toast['text'].strip()}\"")
         shot(page, '02-첫문제-이전버튼-안내', 300, clear=False)
 
+        # 1-c) 🍊 감 배지 → 클릭하면 감이 우수수 떨어짐 + 토스트
+        badge = page.evaluate('window.__harang.orangeBadge')
+        log('감 배지가 누를 수 있는 버튼',
+            badge and badge['tag'] == 'BUTTON' and '감' in badge['label'] and badge['minHeight'] >= 30,
+            json.dumps(badge, ensure_ascii=False))
+        page.evaluate('window.__harang.setOrange(7)')
+        page.wait_for_timeout(150)
+        tap = page.evaluate('window.__harang.tapOrange()')
+        page.wait_for_timeout(700)
+        fx = page.evaluate('window.__harang.fx')
+        toast_i = page.evaluate('window.__harang.toastInfo')
+        log('감 배지 클릭 → 감 비(감 20~30여 개·캔버스에 실제로 그려짐)',
+            20 <= tap['added'] <= 30 and fx['oranges'] >= 20 and fx['running'] and fx['pixels'] > 5000,
+            f"added={tap['added']} oranges={fx['oranges']} pixels={fx['pixels']} running={fx['running']}")
+        log('감 비 응원 토스트',
+            (not toast_i['hidden']) and any(k in toast_i['text'] for k in
+                                            ['주르륵', '통통통', '폭포', '우수수', '통통 튀']),
+            toast_i['text'])
+        log('감 배지 클릭은 감 개수를 바꾸지 않음', page.evaluate('window.__harang.state.orange') == 7,
+            f"orange={page.evaluate('window.__harang.state.orange')}")
+        log('감 배지 통통 튀는 애니메이션', page.evaluate("document.getElementById('orangeChip').classList.contains('tapped')"),
+            page.evaluate("getComputedStyle(document.getElementById('orangeChip')).animationName"))
+        shot(page, '02b-감배지-감비', 0, clear=False)
+        first_oranges = fx['oranges']
+        for _ in range(12):
+            page.evaluate('window.__harang.tapOrange()')
+            page.wait_for_timeout(40)
+        fx2 = page.evaluate('window.__harang.fx')
+        log('연속 클릭 → 더 많이 떨어지되 180개 이하(성능 보호)',
+            fx2['oranges'] > first_oranges and fx2['oranges'] <= 180,
+            f"{first_oranges} -> {fx2['oranges']}")
+        shot(page, '02c-감비-연속클릭', 0, clear=False)
+        page.wait_for_timeout(200)
+        page.evaluate('window.__harang.clearFx()')
+        page.evaluate('window.__harang.setOrange(0)')
+        page.wait_for_timeout(150)
+        page.evaluate("document.getElementById('orangeChip').classList.remove('tapped')")
+
         # 2) 힌트 토글 (그림 힌트 있는 문제가 나올 때까지)
         hint_done = False
         for _ in range(30):
@@ -193,7 +231,7 @@ def run():
             f'{orange_before}->{orange_after} / {retry_title}')
         shot(page, '06-재도전성공')
 
-        # 5-b) 틀린 뒤 해설 보고 넘어가기 → 노력 감 1개
+        # 5-b) 틀린 뒤 해설 보고 넘어가기 → 감 +0 (v6: 틀려서는 절대 안 오름)
         page.click('text=다음 문제')
         page.wait_for_timeout(300)
         if page.locator('#wishModal:not([hidden])').count():
@@ -202,11 +240,14 @@ def run():
         ow = page.evaluate('window.__harang.wrongValue()')
         page.evaluate(f'window.__harang.answer({json.dumps(ow)})')
         page.wait_for_timeout(350)
+        wrong_sub = page.evaluate('window.__harang.feedbackSub')
+        middle_effort = page.evaluate('window.__harang.state.orange')
         page.click('text=알겠어요')
         page.wait_for_timeout(600)
         after_effort = page.evaluate('window.__harang.state.orange')
-        log('노력 감 지급(틀려도 +1)', after_effort == min(100, before_effort + 1),
-            f'{before_effort}->{after_effort}')
+        log('틀리면 감 +0 (해설 보고 넘어가기)', after_effort == before_effort and middle_effort == before_effort
+            and '0개' in wrong_sub,
+            f'{before_effort}->{middle_effort}->{after_effort} / {wrong_sub}')
         if page.locator('#wishModal:not([hidden])').count():
             page.click('#wishCloseBtn')
 
@@ -469,10 +510,20 @@ def run():
             f"queue={rv['queue']} mode={rv['mode']} banner={banner} type={rv_type}")
         shot(page, '20-헷갈린문제-복습모드')
         before_n = len(page.evaluate('window.__harang.wrong'))
+        o_rev0 = page.evaluate('window.__harang.state.orange')
+        rw = page.evaluate('window.__harang.wrongValue()')
+        page.evaluate(f'window.__harang.answer({json.dumps(rw)})')
+        page.wait_for_timeout(450)
+        o_rev1 = page.evaluate('window.__harang.state.orange')
+        log('수학 오답 복습: 틀리면 감 +0', o_rev1 == o_rev0, f'{o_rev0} -> {o_rev1}')
+        page.click('text=다시 풀어보기')
+        page.wait_for_timeout(250)
         page.evaluate('window.__harang.answerCorrect()')
         page.wait_for_timeout(600)
+        o_rev2 = page.evaluate('window.__harang.state.orange')
         after_n = len(page.evaluate('window.__harang.wrong'))
         fb_title = page.inner_text('#fbTitle')
+        log('수학 오답 복습: 맞히면 감 +1', o_rev2 == o_rev1 + 1, f'{o_rev1} -> {o_rev2}')
         log('복습 정답 → 오답 졸업 + 칭찬', after_n == before_n - 1 and '졸업' in fb_title, f'{before_n} -> {after_n} / {fb_title}')
         shot(page, '21-복습-졸업칭찬')
         for _ in range(14):
@@ -520,14 +571,14 @@ def run():
         # 16) 에셋 버전 / 서비스워커 네트워크 우선
         sw_txt = page.evaluate("fetch('sw.js').then(r => r.text())")
         html_txt = page.evaluate("fetch('index.html').then(r => r.text())")
-        log('에셋 버전 v=5', 'styles.css?v=5' in html_txt and 'app.js?v=5' in html_txt
-            and 'dict.js?v=5' in html_txt and 'dict-data.js?v=5' in html_txt,
+        log('에셋 버전 v=6', 'styles.css?v=6' in html_txt and 'app.js?v=6' in html_txt
+            and 'dict.js?v=6' in html_txt and 'dict-data.js?v=6' in html_txt,
             'index.html 쿼리')
-        log('서비스워커 v5 · 네트워크 우선 · 오디오 동적 캐시',
-            "CACHE = 'harang-math-v5'" in sw_txt and 'styles.css?v=5' in sw_txt
+        log('서비스워커 v6 · 네트워크 우선 · 오디오 동적 캐시',
+            "CACHE = 'harang-math-v6'" in sw_txt and 'styles.css?v=6' in sw_txt
             and 'isShell(req.url)' in sw_txt and 'caches.match(req).then((cached) => cached' in sw_txt
             and 'isDictAudio(req.url)' in sw_txt,
-            f"CACHE={'harang-math-v5' in sw_txt} shell={'isShell(req.url)' in sw_txt}")
+            f"CACHE={'harang-math-v6' in sw_txt} shell={'isShell(req.url)' in sw_txt}")
 
         # 17) 수학 출제 비율 — 산수 80% / 1학년 2학기 개념 20%
         mix = page.evaluate("""() => {

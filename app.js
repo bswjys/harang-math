@@ -208,15 +208,27 @@ function playSound(name) {
       [523, 659, 784, 1047, 1319].forEach((f, i) => note(f, i * 0.1, 0.3, 0.1));
     } else if (name === 'tap') {
       note(880, 0, 0.06, 0.05, 'sine');
+    } else if (name === 'rain') {
+      /* 가벼운 감 떨어지는 소리 — 짧게 톡톡 */
+      [1319, 1175, 1568, 988, 1319].forEach((f, i) => note(f, i * 0.055, 0.14, 0.05, 'sine'));
     }
   } catch (e) { /* 소리는 실패해도 괜찮아요 */ }
 }
 
-/* ---------- 반짝이 효과 ---------- */
+/* ---------- 반짝이 효과 + 🍊 감 비 ---------- */
 const fxCanvas = $('fx');
 const fxCtx = fxCanvas.getContext('2d');
-let particles = [];
+let particles = [];      // 반짝이(💖·✨…) — 화면 위에서 짧게 터지는 효과
+let oranges = [];        // 감 비(🍊) — 위에서 우수수 떨어지는 감
 let fxRunning = false;
+const MAX_ORANGES = 180; /* 연속으로 눌러도 이만큼까지만 (느려지지 않게) */
+const ORANGE_EMOJI = '🍊';
+
+function startFx() {
+  if (fxRunning) return;
+  fxRunning = true;
+  requestAnimationFrame(fxLoop);
+}
 
 function sizeFx() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -243,7 +255,32 @@ function burst(count = 46, fromTop = true) {
       life: 1
     });
   }
-  if (!fxRunning) { fxRunning = true; requestAnimationFrame(fxLoop); }
+  startFx();
+}
+
+/* 🍊 감 비 — 크고 작은 감이 회전·좌우 흔들림과 함께 위에서 우수수 (최대 MAX_ORANGES개) */
+function orangeRain(count = 24) {
+  const w = window.innerWidth;
+  const room = Math.max(0, MAX_ORANGES - oranges.length);
+  const add = Math.min(count, room);
+  const born = performance.now();
+  for (let i = 0; i < add; i++) {
+    oranges.push({
+      x0: w * (0.03 + Math.random() * 0.94),
+      y: -40 - Math.random() * 280,
+      vy: 2.1 + Math.random() * 2.9,
+      size: 18 + Math.random() * 28,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.16,
+      amp: 8 + Math.random() * 20,
+      freq: 0.7 + Math.random() * 1.1,
+      phase: Math.random() * Math.PI * 2,
+      born,
+      life: 1
+    });
+  }
+  startFx();
+  return add;
 }
 
 function fxLoop() {
@@ -266,7 +303,31 @@ function fxLoop() {
     fxCtx.restore();
   });
   particles = particles.filter((p) => p.life > 0 && p.y < h + 60);
-  if (particles.length) {
+
+  if (oranges.length) {
+    const now = performance.now();
+    for (let i = 0; i < oranges.length; i++) {
+      const o = oranges[i];
+      const age = (now - o.born) / 1000;
+      o.y += o.vy;
+      o.vy += 0.055;
+      o.rot += o.vr;
+      const x = o.x0 + Math.sin(age * o.freq * Math.PI * 2 + o.phase) * o.amp;
+      if (o.y > h * 0.86) o.life -= 0.035;
+      fxCtx.save();
+      fxCtx.globalAlpha = Math.max(0, o.life);
+      fxCtx.translate(x, o.y);
+      fxCtx.rotate(o.rot);
+      fxCtx.font = `${o.size}px serif`;
+      fxCtx.textAlign = 'center';
+      fxCtx.textBaseline = 'middle';
+      fxCtx.fillText(ORANGE_EMOJI, 0, 0);
+      fxCtx.restore();
+    }
+    oranges = oranges.filter((o) => o.life > 0 && o.y < h + 90);
+  }
+
+  if (particles.length || oranges.length) {
     requestAnimationFrame(fxLoop);
   } else {
     fxRunning = false;
@@ -832,6 +893,7 @@ let reviewQueue = [];
 const ui = {
   rankBadge: $('rankBadge'), levelEmoji: $('levelEmoji'), levelName: $('levelName'),
   orangeCount: $('orangeCount'), progressBar: $('progressBar'), progressOuter: $('progressOuter'),
+  orangeBadge: $('orangeChip'),
   todayProgress: $('todayProgress'), comboChip: $('comboChip'),
   qTag: $('qTag'), qNum: $('qNum'), stage: $('questionStage'),
   answerGrid: $('answerGrid'), hintRow: $('hintRow'), hintBtn: $('hintBtn'), hintArea: $('hintArea'),
@@ -953,6 +1015,37 @@ function showToast(emoji, text, kind = '', ms = 2600) {
   ui.toast.style.animation = '';
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { ui.toast.hidden = true; }, ms);
+}
+
+/* ---------- 🍊 감 배지 → 감 비 ---------- */
+const ORANGE_RAIN_TOASTS = [
+  (n) => `감 비가 주르륵~ 🍊 지금 ${n}개!`,
+  (n) => `통통통! 소원까지 ${100 - n}개 남았어! ✨`,
+  () => '달콤한 감 폭포! 🍊💖',
+  (n) => `우수수~ 감이 쏟아져요! 지금 ${n}개 🍊`,
+  () => '감이 통통 튀어요! 감 비 한 번 더? 🍊'
+];
+let lastOrangeTap = 0;
+let orangeTapRun = 0;      // 연속으로 누른 횟수 — 많이 누를수록 더 신나게
+
+function orangeBadgeTap() {
+  const n = state.orange;
+  const now = Date.now();
+  orangeTapRun = (now - lastOrangeTap < 1200) ? Math.min(orangeTapRun + 1, 6) : 0;
+  lastOrangeTap = now;
+  const count = Math.min(44, 24 + orangeTapRun * 6);
+  const added = orangeRain(count);
+  playSound('rain');
+  if (ui.orangeBadge) {
+    ui.orangeBadge.classList.remove('tapped');
+    void ui.orangeBadge.offsetWidth;
+    ui.orangeBadge.classList.add('tapped');
+  }
+  const msg = n >= 100
+    ? '감 100개! 소원 쿠폰함을 열어 봐요 🎁'
+    : pick(ORANGE_RAIN_TOASTS)(n);
+  showToast('🍊', msg, 'gold', 2400);
+  return { n, added, oranges: oranges.length, toast: msg };
 }
 
 /* ---------- 🧚 요정 응원 ---------- */
@@ -1297,7 +1390,7 @@ function showFeedback(good) {
   } else {
     ui.fbEmoji.textContent = pick(['🌸', '💗', '🫶', '🌈']);
     ui.fbTitle.textContent = pick(ENCOURAGES);
-    ui.fbSub.textContent = '해설을 읽고 다시 한 번 도전해 봐요. 감은 하나도 안 깎였어요!';
+    ui.fbSub.textContent = '괜찮아요! 틀린 문제는 감 0개, 맞히면 감 1개를 받아요 🍊';
   }
 
   ui.fbExplain.innerHTML = `<b>해설</b> · ${current.explain}`;
@@ -1334,11 +1427,9 @@ function showFeedback(good) {
     moveOn.id = 'fbMoveOnBtn';
     moveOn.textContent = '알겠어요! 다음 문제 🌸';
     moveOn.addEventListener('click', () => {
-      if (entry && !entry.rewarded) {
-        entry.rewarded = true;
-        rewarded = true;
-        ui.fbSub.textContent = '끝까지 해설을 본 것도 공부예요! 노력 감 1개를 드려요 🍊';
-        addOrange(1);
+      if (entry) {
+        /* v6: 틀린 문제는 해설을 봐도 감 0개 — 맞혔을 때만 +1 */
+        ui.fbSub.textContent = '해설을 읽었으니 다음에 또 만나요! 맞히면 감 1개를 받아요 🍊';
       }
       saveHistory();
       playSound('tap');
@@ -1833,6 +1924,11 @@ ui.soundBtn.addEventListener('click', () => {
   if (state.sound) { playSound('tap'); setTimeout(() => playSound('correct'), 120); }
 });
 
+/* 🍊 감 배지 → 감이 우수수 + 짧은 응원 토스트 */
+if (ui.orangeBadge) {
+  ui.orangeBadge.addEventListener('click', () => { orangeBadgeTap(); });
+}
+
 /* 🧚 칭호 배지 → 요정 응원 */
 if (ui.rankBadge) {
   ui.rankBadge.addEventListener('click', () => {
@@ -2011,8 +2107,40 @@ if (new URLSearchParams(location.search).get('test') === '1') {
     resetJourney() { startNewJourney(); },
     clearFx() {
       particles = [];
+      oranges = [];
       fxCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     },
+    /* v6: 🍊 감 배지 · 감 비 */
+    tapOrange() { return orangeBadgeTap(); },
+    get fx() {
+      return {
+        oranges: oranges.length,
+        particles: particles.length,
+        running: fxRunning,
+        pixels: (() => {
+          try {
+            const d = fxCtx.getImageData(0, 0, fxCanvas.width, fxCanvas.height).data;
+            let n = 0;
+            for (let i = 3; i < d.length; i += 4) { if (d[i] > 8) n++; }
+            return n;
+          } catch (e) { return -1; }
+        })()
+      };
+    },
+    get orangeBadge() {
+      const el = ui.orangeBadge;
+      return el ? {
+        tag: el.tagName,
+        label: el.getAttribute('aria-label') || '',
+        text: el.textContent.trim(),
+        tapped: el.classList.contains('tapped'),
+        minHeight: Math.round(el.getBoundingClientRect().height)
+      } : null;
+    },
+    get toastInfo() {
+      return ui.toast ? { hidden: ui.toast.hidden, text: ui.toast.textContent.trim() } : null;
+    },
+    get feedbackSub() { return ui.fbSub ? ui.fbSub.textContent : ''; },
     /* v4 과목 탭 */
     subject(name) { const s = setSubject(name); return { subject: s, mathHidden: $('mathPane').hidden, dictHidden: $('dictPane').hidden }; },
     get subj() { return JSON.parse(JSON.stringify(state.subj || {})); },
