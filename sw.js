@@ -1,10 +1,12 @@
 /* 공부하랑핑 service worker — 오프라인에서도 열려요 */
-const CACHE = 'harang-math-v3';
+const CACHE = 'harang-math-v4';
 const ASSETS = [
   './',
   'index.html',
-  'styles.css?v=3',
-  'app.js?v=3',
+  'styles.css?v=4',
+  'app.js?v=4',
+  'dict-data.js?v=4',
+  'dict.js?v=4',
   'fonts/HarangSans.woff',
   'manifest.webmanifest',
   'icons/icon-192.png',
@@ -14,7 +16,7 @@ const ASSETS = [
 ];
 
 /* 새 배포가 바로 보이도록 앱 껍데기(HTML/CSS/JS)는 네트워크 먼저, 실패하면 캐시 */
-const SHELL = [/\/$/, /\/index\.html$/, /\/app\.js$/, /\/styles\.css$/];
+const SHELL = [/\/$/, /\/index\.html$/, /\/app\.js$/, /\/dict\.js$/, /\/dict-data\.js$/, /\/styles\.css$/];
 function isShell(url) {
   try {
     const u = new URL(url);

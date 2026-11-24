@@ -752,3 +752,189 @@ body{
   .qnav-btn{padding:8px 13px}
   .rep-stat span{font-size:10px}
 }
+
+/* ============================================================
+   v4 — 과목 탭 (🔢 수학 / ✏️ 받아쓰기)
+   ============================================================ */
+.subj-tabs{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  background:rgba(255,255,255,.72);
+  border:2px solid var(--pink-200);
+  border-radius:22px;padding:6px;
+  margin:2px 0 12px;
+  box-shadow:var(--shadow-soft);
+  position:relative;z-index:2;
+}
+.subj-tab{
+  font-family:inherit;font-size:clamp(13.5px,3.9vw,15.5px);font-weight:900;
+  color:var(--ink-soft);
+  background:transparent;border:none;border-radius:16px;
+  padding:11px 6px;cursor:pointer;
+  transition:background .18s ease,color .18s ease,box-shadow .18s ease,transform .12s ease;
+  touch-action:manipulation;letter-spacing:-.2px;
+}
+.subj-tab.on{
+  color:#fff;
+  background:linear-gradient(120deg,#ff6fb5,#ff8fc6 45%,#c79bff);
+  box-shadow:0 5px 0 #e05a9e, 0 10px 18px rgba(255,111,181,.26);
+}
+.subj-tab:active{transform:translateY(2px)}
+.pane{display:block}
+.pane[hidden]{display:none}
+
+/* ============================================================
+   v4 — ✏️ 받아쓰기
+   ============================================================ */
+.dict-card{padding:clamp(14px,4.2vw,22px)}
+.dict-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dict-round-btn{
+  flex:1 1 auto;min-width:0;
+  display:flex;align-items:center;gap:7px;
+  font-family: inherit;font-size:clamp(13px,3.7vw,15px);font-weight:900;color:#fff;
+  background:linear-gradient(120deg,#f5479d,#a97bff);
+  border:none;border-radius:16px;padding:10px 13px;cursor:pointer;
+  box-shadow:0 5px 0 #cf3f92,0 10px 18px rgba(169,123,255,.22);
+  text-align:left;touch-action:manipulation;
+}
+.dict-round-btn #dictRoundName{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dict-round-emoji{flex:0 0 auto}
+.dict-caret{flex:0 0 auto;transition:transform .2s ease;opacity:.9}
+.dict-round-btn[aria-expanded="true"] .dict-caret{transform:rotate(180deg)}
+.dict-counter{
+  flex:0 0 auto;font-size:clamp(13px,3.6vw,15px);font-weight:900;color:var(--pink-600);
+  background:#fff;border:2px solid var(--pink-200);border-radius:14px;
+  padding:8px 11px;box-shadow:0 3px 0 #ffe0f0;
+}
+.dict-counter b{font-size:1.15em}
+.dc-sep{color:var(--pink-300);padding:0 3px}
+
+.dict-rounds{display:none;flex-direction:column;gap:6px;margin:4px 0 12px}
+.dict-rounds.open{display:flex}
+.dict-round{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-family:inherit;font-size:13px;font-weight:900;color:#6b4a61;
+  background:#fff;border:2px solid var(--pink-100);border-radius:14px;
+  padding:10px 12px;cursor:pointer;text-align:left;
+  transition:border-color .15s ease,background .15s ease,transform .12s ease;
+}
+.dict-round:active{transform:scale(.99)}
+.dict-round.on{background:#fff2f9;border-color:var(--pink-300);color:var(--pink-600)}
+.dict-round.practice{background:#fffdf4;border-color:#ffe6b8}
+.dict-round.practice.on{background:#fff7e4;border-color:#ffcf7a;color:#c9761b}
+.dr-name{flex:1 1 auto;min-width:0}
+.dr-count{flex:0 0 auto;font-size:11.5px;color:var(--ink-soft);background:#fff;border-radius:999px;padding:2px 8px;border:1.5px solid #f3e2ec}
+
+.dict-mode{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.dict-mode-btn{
+  font-family:inherit;font-size:clamp(12.5px,3.5vw,14px);font-weight:900;
+  color:var(--ink-soft);background:#fff;border:2px solid var(--pink-100);
+  border-radius:14px;padding:10px 6px;cursor:pointer;touch-action:manipulation;
+  transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.dict-mode-btn.on{color:#fff;background:linear-gradient(120deg,#ff8fc6,#c79bff);border-color:transparent;box-shadow:0 4px 0 #e08cbb}
+.dict-mode-btn:active{transform:translateY(2px)}
+
+.dict-listen-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:4px 0 8px}
+.dict-listen{
+  font-family:inherit;font-size:clamp(12px,3.4vw,13.5px);font-weight:900;color:var(--pink-600);
+  background:#fff6fb;border:2px solid var(--pink-200);border-radius:16px;
+  padding:12px 6px;cursor:pointer;box-shadow:0 4px 0 #ffe0f0;
+  transition:transform .12s ease,box-shadow .12s ease,background .16s ease;
+  touch-action:manipulation;
+}
+.dict-listen.slow{color:#7b5cc4;background:#f7f2ff;border-color:#dcc9ff;box-shadow:0 4px 0 #e6d8ff}
+.dict-listen.on{background:linear-gradient(120deg,#ff6fb5,#c79bff);color:#fff;border-color:transparent;box-shadow:0 4px 0 #cf7fb8}
+.dict-listen.on.slow{background:linear-gradient(120deg,#9b7bff,#c79bff)}
+.dict-listen:active{transform:translateY(2px)}
+
+.dict-state{
+  margin:6px 0 12px;text-align:center;
+  font-size:clamp(11.5px,3.2vw,13px);font-weight:900;color:var(--ink-soft);
+}
+.dict-guide{margin:0 0 8px;font-size:clamp(11.5px,3.2vw,13px);font-weight:800;color:var(--ink-soft);text-align:center;line-height:1.5}
+.dict-guide b{color:var(--pink-600)}
+
+.btn-good{
+  color:#fff;font-size:clamp(14px,3.9vw,16px);padding:12px 20px;
+  background:linear-gradient(120deg,#5fd39a,#8ee7b8);box-shadow:0 5px 0 #3fae7b;
+}
+.btn-good:active{box-shadow:0 2px 0 #3fae7b}
+
+.dict-answer{margin-top:12px;animation:cardIn .28s ease}
+.dict-paper{
+  display:flex;flex-wrap:wrap;gap:5px;
+  background:
+    repeating-linear-gradient(180deg, #fffdf9 0 26px, #ffeef7 26px 27px);
+  border:2px solid var(--pink-200);border-radius:16px;
+  padding:10px 10px 8px;min-height:56px;
+  box-shadow:inset 0 2px 8px rgba(255,143,198,.1);
+}
+.dcell{
+  width:clamp(20px,5.6vw,26px);height:clamp(22px,6vw,28px);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:clamp(15px,4.4vw,19px);font-weight:900;color:#4a2b44;
+  border:1px dashed #f5cfe4;border-radius:5px;background:rgba(255,255,255,.86);
+}
+.dcell.space{border-color:transparent;background:transparent}
+.dcell.bad{color:#e0342f;border-color:#ffc9c7;background:#fff2f1;text-decoration:underline wavy #ff8a85}
+
+.dict-tip{
+  margin:9px 0 0;font-size:clamp(12px,3.4vw,13.5px);font-weight:800;color:#6b4a61;line-height:1.55;
+  background:#fff9ee;border:2px solid #ffe3b8;border-radius:14px;padding:9px 11px;
+}
+.dict-tip b{color:#c9761b}
+.dict-grade{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+
+.dict-label{display:block;font-size:clamp(11.5px,3.2vw,13px);font-weight:900;color:var(--ink-soft);margin-bottom:6px}
+.dict-input{
+  width:100%;font-family:inherit;font-size:clamp(15px,4.3vw,17px);font-weight:800;color:#4a2b44;
+  background:#fff;border:2px solid var(--pink-200);border-radius:16px;
+  padding:13px 14px;outline:none;margin-bottom:9px;
+  box-shadow:inset 0 2px 6px rgba(255,143,198,.1);
+}
+.dict-input:focus{border-color:var(--pink-400);box-shadow:0 0 0 4px rgba(255,179,214,.35)}
+.dict-input::placeholder{color:#e2b9cf;font-weight:800}
+.dict-result{margin-top:11px;animation:cardIn .25s ease}
+.dict-result .dict-paper{margin-bottom:0}
+.dict-mine{
+  display:flex;flex-direction:column;gap:2px;margin:8px 0 0;
+  font-size:clamp(12.5px,3.5vw,14px);font-weight:900;color:#6b4a61;
+  background:#fff;border:2px solid var(--pink-100);border-radius:12px;padding:8px 11px;
+  word-break:break-all;line-height:1.5;
+}
+.dict-mine span{font-size:11px;color:var(--ink-soft);font-weight:800}
+.dict-mine u.bad{color:#e0342f;text-decoration:underline wavy #ff6a63}
+.dict-note{margin:8px 0 0;font-size:clamp(11.5px,3.2vw,13px);font-weight:900;color:var(--pink-600);text-align:center}
+
+.dict-banner{
+  display:flex;align-items:center;gap:9px;margin-top:12px;
+  background:linear-gradient(120deg,#fff6e4,#ffeaf6);border:2px solid #ffd9a8;border-radius:16px;
+  padding:11px 13px;animation:cardIn .3s ease;
+}
+.dict-banner p{margin:0;font-size:clamp(12.5px,3.5vw,14px);font-weight:900;color:#a3630f;line-height:1.45}
+.db-emoji{font-size:clamp(20px,5.6vw,26px);flex:0 0 auto}
+.dict-nav{margin-top:12px}
+
+/* 리포트 — 과목별 카드 */
+.rep-subj{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.rep-subj-card{
+  display:flex;flex-direction:column;gap:2px;
+  background:#fff;border:2px solid var(--pink-100);border-radius:16px;
+  padding:10px 12px;
+}
+.rep-subj-card.math{background:#fff6fb;border-color:#ffd9ec}
+.rep-subj-card.dict{background:#f9f5ff;border-color:#e3d6ff}
+.rs-emoji{font-size:15px;line-height:1}
+.rs-name{font-size:11.5px;font-weight:900;color:var(--ink-soft)}
+.rs-rate{font-size:clamp(17px,4.8vw,20px);font-weight:900;color:var(--pink-600);line-height:1.15}
+.rep-subj-card.dict .rs-rate{color:#7b5cc4}
+.rs-foot{font-size:10.5px;font-weight:800;color:var(--ink-soft);line-height:1.35}
+.rep-dict-cats{margin-top:2px}
+.dict-rlabel{margin:0 0 6px;font-size:clamp(11.5px,3.2vw,13px);font-weight:900;color:var(--ink-soft)}
+.dict-result .dict-tip{margin-top:8px}
+/* 급수 목록은 길어서 화면 안에서 스크롤 */
+.dict-rounds.open{max-height:44dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:2px}
+/* 리포트 받아쓰기 줄은 조금 더 촘촘하게 */
+.rep-dict-cats .rep-cat{padding:6px 10px;border-radius:12px}
+.rep-dict-cats .rep-cat-head{font-size:12px}
+.rep-dict-cats .rep-cat-foot{font-size:10.5px}

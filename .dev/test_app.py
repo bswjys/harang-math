@@ -491,12 +491,13 @@ def run():
         # 16) 에셋 버전 / 서비스워커 네트워크 우선
         sw_txt = page.evaluate("fetch('sw.js').then(r => r.text())")
         html_txt = page.evaluate("fetch('index.html').then(r => r.text())")
-        log('에셋 버전 v=3', 'styles.css?v=3' in html_txt and 'app.js?v=3' in html_txt,
+        log('에셋 버전 v=4', 'styles.css?v=4' in html_txt and 'app.js?v=4' in html_txt
+            and 'dict.js?v=4' in html_txt and 'dict-data.js?v=4' in html_txt,
             'index.html 쿼리')
-        log('서비스워커 v3 · 네트워크 우선',
-            "CACHE = 'harang-math-v3'" in sw_txt and 'styles.css?v=3' in sw_txt
+        log('서비스워커 v4 · 네트워크 우선',
+            "CACHE = 'harang-math-v4'" in sw_txt and 'styles.css?v=4' in sw_txt
             and 'isShell(req.url)' in sw_txt and 'caches.match(req).then((cached) => cached' in sw_txt,
-            f"CACHE={'harang-math-v3' in sw_txt} shell={'isShell(req.url)' in sw_txt}")
+            f"CACHE={'harang-math-v4' in sw_txt} shell={'isShell(req.url)' in sw_txt}")
 
         # 11) 태블릿 / PC
         for name, vw, vh, mobile in [('태블릿-820', 820, 1180, True), ('PC-1280', 1280, 900, False)]:
