@@ -1,10 +1,10 @@
 /* 공부하랑핑 service worker — 오프라인에서도 열려요 */
-const CACHE = 'harang-math-v2';
+const CACHE = 'harang-math-v3';
 const ASSETS = [
   './',
   'index.html',
-  'styles.css?v=2',
-  'app.js?v=2',
+  'styles.css?v=3',
+  'app.js?v=3',
   'fonts/HarangSans.woff',
   'manifest.webmanifest',
   'icons/icon-192.png',
@@ -12,6 +12,16 @@ const ASSETS = [
   'icons/icon-512-maskable.png',
   'icons/icon-180.png'
 ];
+
+/* 새 배포가 바로 보이도록 앱 껍데기(HTML/CSS/JS)는 네트워크 먼저, 실패하면 캐시 */
+const SHELL = [/\/$/, /\/index\.html$/, /\/app\.js$/, /\/styles\.css$/];
+function isShell(url) {
+  try {
+    const u = new URL(url);
+    if (u.origin !== self.location.origin) return false;
+    return SHELL.some((re) => re.test(u.pathname));
+  } catch (e) { return false; }
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -31,19 +41,33 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
+  /* 1) 앱 껍데기: 네트워크 우선 (실패하면 캐시) */
+  if (isShell(req.url)) {
+    event.respondWith(
+      fetch(req).then((res) => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        }
+        return res;
+      }).catch(() => caches.match(req).then((cached) => cached || caches.match('index.html')))
+    );
+    return;
+  }
+
+  /* 2) 나머지(폰트·아이콘 등): 캐시 우선 + 뒤에서 조용히 갱신 */
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) {
-        // 캐시를 먼저 주고, 뒤에서 최신 파일로 조용히 갱신
         fetch(req).then((res) => {
-          if (res && res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone()));
+          if (res && res.ok) caches.open(CACHE).then((c) => c.put(req, res.clone())).catch(() => {});
         }).catch(() => {});
         return cached;
       }
       return fetch(req).then((res) => {
-        if (res && res.ok && new URL(req.url).origin === location.origin) {
+        if (res && res.ok && new URL(req.url).origin === self.location.origin) {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
+          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
         }
         return res;
       }).catch(() => caches.match('index.html'));

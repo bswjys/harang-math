@@ -700,6 +700,48 @@ let questionNo = 0;
 const history = [];          // 푼 문제 히스토리 (◀ 이전 문제)
 let hIndex = -1;
 const HISTORY_MAX = 40;
+const HISTORY_KEY = 'harang-math-history-v1';   // 앱을 닫아도 남는 문제 기록
+
+/* 히스토리 저장/불러오기 — 앱을 닫았다 열어도 ◀ 이전 문제로 복습할 수 있게 */
+function saveHistory() {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify({ v: 1, no: questionNo, entries: history }));
+  } catch (e) { /* 저장 공간이 모자라도 앱은 계속 열려야 함 */ }
+}
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    const entries = Array.isArray(saved) ? saved : (saved && saved.entries);
+    if (!Array.isArray(entries)) return false;
+    entries.forEach((e) => {
+      const q = e && e.q;
+      if (!q || typeof q.stage !== 'string' || !Array.isArray(q.options)
+          || typeof q.answer !== 'string' || q.options.indexOf(q.answer) < 0) return;
+      history.push({
+        q,
+        mode: 'normal',              // 지난번 복습 모드는 새로 열면 의미가 없어요
+        no: Number(e.no) || 0,
+        answered: !!e.answered,
+        chosen: e.chosen === undefined ? null : e.chosen,
+        correct: e.correct === undefined ? null : e.correct,
+        rewarded: !!e.rewarded,      // 감 중복 적립 방지의 핵심
+        retried: !!e.retried,
+        counted: !!e.counted
+      });
+    });
+    if (history.length > HISTORY_MAX) history.splice(0, history.length - HISTORY_MAX);
+    const savedNo = Number(saved && saved.no) || 0;
+    const maxNo = history.reduce((m, h) => Math.max(m, h.no || 0), 0);
+    questionNo = Math.max(questionNo, savedNo, maxNo);
+    return history.length > 0;
+  } catch (e) {
+    history.length = 0;
+    return false;
+  }
+}
 
 let reviewActive = false;    // 🌸 헷갈린 문제 복습 모드
 let reviewQueue = [];
@@ -919,6 +961,7 @@ function newQuestion(q, mode) {
   hIndex = history.length - 1;
   renderEntry(entry);
   renderStatus();
+  saveHistory();
   return entry;
 }
 
@@ -983,8 +1026,9 @@ function renderEntry(entry) {
 function renderNav() {
   if (!ui.prevBtn) return;
   const canPrev = hIndex > 0;
-  ui.prevBtn.disabled = !canPrev;
+  // 첫 문제에서는 흐리게만 보이고, 누르면 안내 토스트가 떠요 (무반응 아님)
   ui.prevBtn.classList.toggle('off', !canPrev);
+  ui.prevBtn.title = canPrev ? '방금 푼 문제로 돌아가기' : '한 문제 더 풀면 돌아갈 수 있어요';
   if (ui.nextBtn) ui.nextBtn.hidden = !(hIndex < history.length - 1);
 }
 
@@ -1142,6 +1186,7 @@ function onAnswer(value, btn) {
   if (wasFirst) checkMission();
   renderStatus();
   saveState();
+  saveHistory();
 }
 
 function showFeedback(good) {
@@ -1184,6 +1229,7 @@ function showFeedback(good) {
       entry.correct = null;
       answered = false;
       retried = true;
+      saveHistory();
       ui.feedback.hidden = true;
       [...ui.answerGrid.children].forEach((b) => {
         b.disabled = false;
@@ -1205,6 +1251,7 @@ function showFeedback(good) {
         ui.fbSub.textContent = '끝까지 해설을 본 것도 공부예요! 노력 감 1개를 드려요 🍊';
         addOrange(1);
       }
+      saveHistory();
       playSound('tap');
       goNext();
     });
@@ -1632,7 +1679,14 @@ ui.soundBtn.addEventListener('click', () => {
 if (ui.readBtn) ui.readBtn.addEventListener('click', speakQuestion);
 
 /* ◀ 이전 문제 / 다음 문제 ▶ */
-if (ui.prevBtn) ui.prevBtn.addEventListener('click', goBack);
+if (ui.prevBtn) ui.prevBtn.addEventListener('click', () => {
+  if (hIndex <= 0) {
+    showToast('◀', '한 문제 풀고 넘어가면 돌아갈 수 있어요 😊', '', 2800);
+    playSound('tap');
+    return;
+  }
+  goBack();
+});
 if (ui.nextBtn) ui.nextBtn.addEventListener('click', goForward);
 
 /* 🌸 헷갈린 문제 복습 */
@@ -1667,6 +1721,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ---------- 시작 ---------- */
+loadHistory();                     // 지난번에 풀던 문제들 되살리기
 renderStatus();
 renderQuestion(makeQuestion());
 renderMission();
@@ -1717,6 +1772,13 @@ if (new URLSearchParams(location.search).get('test') === '1') {
     /* --- 5종 업그레이드용 확인 도구 --- */
     get entry() { return active; },
     get historyInfo() { return { len: history.length, index: hIndex, no: active ? active.no : 0, mode: active ? active.mode : null }; },
+    historyStore() {
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        const saved = raw ? JSON.parse(raw) : null;
+        return saved ? { no: saved.no, len: (saved.entries || []).length } : null;
+      } catch (e) { return null; }
+    },
     prev() { return goBack(); },
     forward() { return goForward(); },
     goNext() { return goNext(); },

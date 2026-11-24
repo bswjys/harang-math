@@ -85,6 +85,29 @@ def run():
         badge = page.evaluate("getComputedStyle(document.getElementById('wishBadge')).display")
         log('소원 배지 숨김', badge == 'none', badge)
 
+        # 1-b) 첫 문제에서 ◀ 이전 문제 → 무반응이 아니라 안내 토스트
+        first_nav = page.evaluate("""() => ({
+            index: window.__harang.historyInfo.index,
+            len: window.__harang.historyInfo.len,
+            disabled: document.getElementById('prevBtn').disabled,
+            off: document.getElementById('prevBtn').classList.contains('off')
+        })""")
+        page.click('#prevBtn')
+        page.wait_for_timeout(400)
+        toast = page.evaluate("""() => ({
+            hidden: document.getElementById('toast').hidden,
+            text: document.getElementById('toast').textContent,
+            qnum: document.getElementById('qNum').textContent
+        })""")
+        after_tap = page.evaluate('window.__harang.historyInfo')
+        log('첫 문제 이전버튼 안내 토스트',
+            first_nav['index'] == 0 and first_nav['len'] == 1 and not first_nav['disabled']
+            and first_nav['off'] and not toast['hidden']
+            and '한 문제 풀고 넘어가면 돌아갈 수 있어요' in toast['text']
+            and after_tap['index'] == 0,
+            f"disabled={first_nav['disabled']} off={first_nav['off']} / 토스트=\"{toast['text'].strip()}\"")
+        shot(page, '02-첫문제-이전버튼-안내', 300, clear=False)
+
         # 2) 힌트 토글 (그림 힌트 있는 문제가 나올 때까지)
         hint_done = False
         for _ in range(30):
@@ -282,6 +305,68 @@ def run():
         log('▶ 다음 문제로 복귀', back['index'] == hist['index'] and orange_prev == orange_now,
             f"index {back['index']}/{hist['index']} · orange {orange_prev}")
 
+        # 10-b) 앱을 닫았다 열어도(새로고침) ◀ 이전 문제 복습 + 감 중복 없음
+        page.evaluate('window.__harang.clearFx()')
+        page.evaluate('window.__harang.answerCorrect()')
+        page.wait_for_timeout(430)
+        page.evaluate('window.__harang.next()')
+        page.wait_for_timeout(330)
+        page.evaluate('window.__harang.answerCorrect()')
+        page.wait_for_timeout(470)
+        before_reload = page.evaluate("""() => ({
+            orange: window.__harang.state.orange,
+            solved: window.__harang.state.today.solved,
+            info: window.__harang.historyInfo,
+            store: window.__harang.historyStore()
+        })""")
+        log('이전 문제 localStorage 저장', bool(before_reload['store']) and before_reload['store']['len'] >= 2,
+            json.dumps(before_reload['store']))
+
+        page.reload(wait_until='load')
+        page.wait_for_selector('.answer-btn')
+        page.wait_for_timeout(800)
+        restored = page.evaluate("""() => ({
+            info: window.__harang.historyInfo,
+            orange: window.__harang.state.orange,
+            disabled: document.getElementById('prevBtn').disabled,
+            off: document.getElementById('prevBtn').classList.contains('off'),
+            store: window.__harang.historyStore()
+        })""")
+        log('새로 열어도 이전 문제 남음',
+            restored['info']['len'] >= 2 and restored['info']['index'] == restored['info']['len'] - 1
+            and restored['orange'] == before_reload['orange'] and not restored['disabled']
+            and not restored['off'],
+            f"len={restored['info']['len']} index={restored['info']['index']} orange={restored['orange']}")
+
+        orange_before_prev = page.evaluate('window.__harang.state.orange')
+        page.click('#prevBtn')
+        page.wait_for_timeout(550)
+        prev_after_reload = page.evaluate("""() => ({
+            info: window.__harang.historyInfo,
+            answered: !!(window.__harang.entry && window.__harang.entry.answered),
+            rewarded: !!(window.__harang.entry && window.__harang.entry.rewarded),
+            fb: !document.getElementById('feedback').hidden,
+            correctMarked: !!document.querySelector('#answerGrid .answer-btn.correct'),
+            locked: [...document.querySelectorAll('#answerGrid .answer-btn')].every(b => b.disabled),
+            qnum: document.getElementById('qNum').textContent
+        })""")
+        log('새로 열고 ◀ 이전 문제 복습',
+            prev_after_reload['info']['index'] == restored['info']['index'] - 1
+            and prev_after_reload['answered'] and prev_after_reload['fb']
+            and prev_after_reload['locked'] and prev_after_reload['correctMarked'],
+            f"{prev_after_reload['qnum']} / index={prev_after_reload['info']['index']} 해설={prev_after_reload['fb']}")
+        shot(page, '15b-새로열고-이전문제복습', 400)
+
+        page.evaluate('window.__harang.answerCorrect()')
+        page.wait_for_timeout(380)
+        after_prev_reload = page.evaluate("""() => ({orange: window.__harang.state.orange,
+            solved: window.__harang.state.today.solved})""")
+        log('새로 연 뒤 이전 문제 감 중복 없음',
+            after_prev_reload['orange'] == orange_before_prev
+            and after_prev_reload['solved'] == before_reload['solved']
+            and prev_after_reload['rewarded'],
+            f"{before_reload['solved']}문제 / orange {orange_before_prev} -> {after_prev_reload['orange']}")
+
         # 11) 🗣️ 문제 읽어주기
         said = page.evaluate('window.__harang.readAloud()')
         page.wait_for_timeout(700)
@@ -402,6 +487,16 @@ def run():
         ov = overflow(page)
         log('가로 넘침 없음 (모바일 최종)', ov['sw'] <= ov['iw'] + 1, json.dumps(ov, ensure_ascii=False))
         log('콘솔 오류 0건', len(console_errors) == 0, ' / '.join(console_errors[:4]))
+
+        # 16) 에셋 버전 / 서비스워커 네트워크 우선
+        sw_txt = page.evaluate("fetch('sw.js').then(r => r.text())")
+        html_txt = page.evaluate("fetch('index.html').then(r => r.text())")
+        log('에셋 버전 v=3', 'styles.css?v=3' in html_txt and 'app.js?v=3' in html_txt,
+            'index.html 쿼리')
+        log('서비스워커 v3 · 네트워크 우선',
+            "CACHE = 'harang-math-v3'" in sw_txt and 'styles.css?v=3' in sw_txt
+            and 'isShell(req.url)' in sw_txt and 'caches.match(req).then((cached) => cached' in sw_txt,
+            f"CACHE={'harang-math-v3' in sw_txt} shell={'isShell(req.url)' in sw_txt}")
 
         # 11) 태블릿 / PC
         for name, vw, vh, mobile in [('태블릿-820', 820, 1180, True), ('PC-1280', 1280, 900, False)]:

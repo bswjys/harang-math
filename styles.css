@@ -647,7 +647,7 @@ body{
   touch-action:manipulation;
 }
 .qnav-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #ffe0f0}
-.qnav-btn.off{opacity:.42;box-shadow:none;cursor:default}
+.qnav-btn.off{opacity:.42;box-shadow:none}
 
 /* ===== 🌸 복습 배너 ===== */
 .review-banner{
@@ -732,7 +732,7 @@ body{
   position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);
   transform:translateX(-50%);
   z-index:115;display:flex;align-items:center;gap:9px;
-  max-width:calc(100vw - 28px);
+  width:max-content;max-width:calc(100vw - 28px);
   padding:12px 18px;border-radius:999px;
   background:linear-gradient(120deg,#fff 0%,#fff2fa 100%);
   border:3px solid var(--pink-300);
