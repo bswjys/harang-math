@@ -714,6 +714,13 @@ function renderStatus(bump = false) {
     void ui.orangeCount.parentElement.offsetWidth;
     ui.orangeCount.parentElement.classList.add('bump');
   }
+
+  const sSolved = $('statSolved');
+  if (sSolved) {
+    sSolved.textContent = String(state.today.solved);
+    $('statCorrect').textContent = String(state.today.correct);
+    $('statBest').textContent = String(state.bestCombo);
+  }
 }
 
 function renderQuestion(q) {
@@ -729,7 +736,8 @@ function renderQuestion(q) {
   ui.stage.innerHTML = q.stage;
   ui.feedback.hidden = true;
 
-  ui.answerGrid.className = 'answers ' + (q.options.length === 3 ? 'three' : q.options.length === 4 ? 'four' : '');
+  const symbolOnly = q.options.every((o) => ['>', '<', '='].includes(o));
+  ui.answerGrid.className = 'answers ' + (q.options.length === 3 ? 'three' : q.options.length === 4 ? 'four' : '') + (symbolOnly ? ' symbols' : '');
   ui.answerGrid.innerHTML = '';
   q.options.forEach((opt) => {
     const b = document.createElement('button');
@@ -1200,6 +1208,10 @@ if (new URLSearchParams(location.search).get('test') === '1') {
     openWish() { openWishModal(false); },
     coupons() { renderCoupons(); ui.couponModal.hidden = false; document.body.style.overflow = 'hidden'; },
     resetJourney() { startNewJourney(); },
+    clearFx() {
+      particles = [];
+      fxCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    },
     makeQuestion
   };
 }

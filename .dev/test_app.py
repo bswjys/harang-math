@@ -35,9 +35,12 @@ def log(name, ok, detail=''):
     results.append((name, ok, detail))
     print(('PASS' if ok else 'FAIL'), '|', name, '|', detail)
 
-def shot(page, name, settle=1700):
+def shot(page, name, settle=1700, clear=True):
     if settle:
         page.wait_for_timeout(settle)
+    if clear:
+        page.evaluate("window.__harang && window.__harang.clearFx && window.__harang.clearFx()")
+        page.wait_for_timeout(120)
     path = os.path.join(SHOTS, name + '.png')
     page.screenshot(path=path)
     return path
@@ -194,7 +197,7 @@ def run():
         log('감100 소원 팝업', modal_open and lvl == '소원요정 하랑핑', f'칭호={lvl}')
         if modal_open:
             page.wait_for_timeout(500)
-            shot(page, '07-감100-소원팝업')
+            shot(page, '07-감100-소원팝업', 600, clear=False)
             page.click('.wish-chip >> nth=0')
             page.wait_for_timeout(200)
             page.click('#wishSaveBtn')
