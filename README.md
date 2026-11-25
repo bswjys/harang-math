@@ -95,9 +95,9 @@ audio/eng/           영어 76문항 MP3 (en-US-AnaNeural) + index.json
 fonts/HarangSans.woff  한글 폰트(Noto Sans KR 일부 글자, OFL)
 icons/               앱 아이콘 (192/512/180/1024, maskable)
 manifest.webmanifest  홈 화면에 추가용
-sw.js                오프라인 캐시 (harang-math-v7, 껍데기는 네트워크 우선·MP3은 들을 때 캐시)
+sw.js                오프라인 캐시 (harang-math-v8, 껍데기는 네트워크 우선·MP3은 들을 때 캐시)
 tools/make_icons.py  아이콘 다시 만들기
-tools/make_dict_audio.py  받아쓰기 MP3 110문장 다시 만들기 (edge-tts)
+tools/make_dict_audio.py  받아쓰기 MP3 다시 만들기 (edge-tts) — 인자 없으면 110문장 전부, `r5-1 r7-10`처럼 지정하면 그 문장만
 tools/make_eng_audio.py   영어 MP3 76문항 다시 만들기 (edge-tts, en-US-AnaNeural)
 .dev/test_app.py     Playwright 자동 검증 (모바일·태블릿·PC·오프라인)
 .dev/test_dict.py    받아쓰기 검증 (110문장·MP3·채점·오답 복습)

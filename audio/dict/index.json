@@ -420,8 +420,8 @@
   "pitch": "+6Hz"
  },
  "r5-1": {
-  "text": "홀라후프 돌리기",
-  "size": 13968,
+  "text": "훌라후프 돌리기",
+  "size": 13824,
   "voice": "ko-KR-SunHiNeural",
   "pitch": "+6Hz"
  },
@@ -594,7 +594,7 @@
   "pitch": "+6Hz"
  },
  "r7-10": {
-  "text": "달콤하고 잠조름했다.",
+  "text": "달콤하고 짭조름했다.",
   "size": 16128,
   "voice": "ko-KR-SunHiNeural",
   "pitch": "+6Hz"

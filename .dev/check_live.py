@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""배포된 https://bswjys.github.io/harang-math/ 라이브 확인 (v7 — 🔤 영어 · 풍성한 요정 · 3과목 탭)"""
+"""배포된 https://bswjys.github.io/harang-math/ 라이브 확인 (v8 — 🔤 영어 · 풍성한 요정 · 3과목 탭)"""
 import asyncio, json, os, sys
 from playwright.async_api import async_playwright
 
@@ -27,14 +27,14 @@ async def main():
         await page.reload(wait_until='load')
         await page.wait_for_selector('.answer-btn', timeout=20000)
         await page.wait_for_timeout(1200)
-        log('라이브 v7 열림', '공부하랑핑' in await page.title(), await page.title())
+        log('라이브 v8 열림', '공부하랑핑' in await page.title(), await page.title())
 
         html = await page.evaluate("fetch('index.html').then(r => r.text()).catch(() => '')")
         sw_txt = await page.evaluate("fetch('sw.js').then(r => r.text()).catch(() => '')")
-        log('라이브 에셋 v=7 (영어 포함)', 'styles.css?v=7' in html and 'app.js?v=7' in html
-            and 'dict.js?v=7' in html and 'dict-data.js?v=7' in html
-            and 'eng.js?v=7' in html and 'eng-data.js?v=7' in html, 'index.html 쿼리')
-        log('라이브 서비스워커 v7', "harang-math-v7" in sw_txt, sw_txt.split('\n')[1][:60])
+        log('라이브 에셋 v=8 (영어 포함)', 'styles.css?v=8' in html and 'app.js?v=8' in html
+            and 'dict.js?v=8' in html and 'dict-data.js?v=8' in html
+            and 'eng.js?v=8' in html and 'eng-data.js?v=8' in html, 'index.html 쿼리')
+        log('라이브 서비스워커 v8', "harang-math-v8" in sw_txt, sw_txt.split('\n')[1][:60])
 
         # 🍊 감 배지 → 감 비
         badge = await page.evaluate('window.__harang.orangeBadge')
