@@ -1085,6 +1085,32 @@ function nextCheer() {
   return FAIRY_CHEERS[i];
 }
 
+/* 모달·추가창 화면 고정 (2026-11-28)
+   열 때 스크롤 위치를 저장하고 body를 fixed로 잠가 배경이 흔들리지 않게 한다.
+   여러 창이 겹쳐 열려도 마지막 창이 닫힐 때만 원래 위치로 돌아간다. */
+let lockedScrollY = null;
+const MODAL_IDS = ['fairyModal', 'wishModal', 'couponModal', 'reportModal'];
+
+function syncModalLock() {
+  const anyOpen = MODAL_IDS.some((id) => {
+    const n = document.getElementById(id);
+    return n && !n.hidden;
+  });
+  const isLocked = document.body.classList.contains('modal-open');
+
+  if (anyOpen && !isLocked) {
+    lockedScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+    document.body.style.top = `-${lockedScrollY}px`;
+    document.body.classList.add('modal-open');
+  } else if (!anyOpen && isLocked) {
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    const backY = lockedScrollY || 0;
+    lockedScrollY = null;
+    window.scrollTo(0, backY);
+  }
+}
+
 function fairyModalOpen() {
   return !!ui.fairyModal && !ui.fairyModal.hidden;
 }
@@ -1093,7 +1119,7 @@ function closeFairy() {
   if (!ui.fairyModal) return;
   ui.fairyModal.hidden = true;
   const others = [ui.wishModal, ui.couponModal, ui.reportModal].some((m) => m && !m.hidden);
-  if (!others) document.body.style.overflow = '';
+  if (!others) syncModalLock();
 }
 
 function openFairy(celebrate) {
@@ -1128,7 +1154,7 @@ function openFairy(celebrate) {
   }
 
   ui.fairyModal.hidden = false;
-  document.body.style.overflow = 'hidden';
+  syncModalLock();
 
   if (party) {
     playSound('wish');
@@ -1703,7 +1729,7 @@ function renderReport() {
 function openReport() {
   renderReport();
   ui.reportModal.hidden = false;
-  document.body.style.overflow = 'hidden';
+  syncModalLock();
   playSound('tap');
 }
 
@@ -1748,7 +1774,7 @@ function openWishModal(auto = false) {
     lead.textContent = wishJustSaved ? '이제 새로운 100개를 모아요 🌱' : '엄마 아빠에게 소원 말하기 🎁';
   }
   ui.wishModal.hidden = false;
-  document.body.style.overflow = 'hidden';
+  syncModalLock();
 
   wishSavedBox.querySelectorAll('.start-journey').forEach((n) => n.remove());
   wishForm.hidden = true;
@@ -1842,7 +1868,7 @@ function closeModals() {
   if (ui.reportModal) ui.reportModal.hidden = true;
   if (ui.fairyModal) ui.fairyModal.hidden = true;
   wishJustSaved = null;
-  document.body.style.overflow = '';
+  syncModalLock();
 }
 
 function formatDate(iso) {
@@ -1999,7 +2025,7 @@ ui.wishBoxBtn.addEventListener('click', () => {
   playSound('tap');
   renderCoupons();
   ui.couponModal.hidden = false;
-  document.body.style.overflow = 'hidden';
+  syncModalLock();
 });
 
 $('couponClose').addEventListener('click', closeModals);
@@ -2156,7 +2182,7 @@ if (new URLSearchParams(location.search).get('test') === '1') {
         }));
     },
     openWish() { openWishModal(false); },
-    coupons() { renderCoupons(); ui.couponModal.hidden = false; document.body.style.overflow = 'hidden'; },
+    coupons() { renderCoupons(); ui.couponModal.hidden = false; syncModalLock(); },
     resetJourney() { startNewJourney(); },
     clearFx() {
       particles = [];
