@@ -1,14 +1,14 @@
 /* 공부하랑핑 service worker — 오프라인에서도 열려요 */
-const CACHE = 'harang-math-v8';
+const CACHE = 'harang-math-v9';
 const ASSETS = [
   './',
   'index.html',
-  'styles.css?v=8',
-  'app.js?v=8',
-  'dict-data.js?v=8',
-  'dict.js?v=8',
-  'eng-data.js?v=8',
-  'eng.js?v=8',
+  'styles.css?v=9',
+  'app.js?v=9',
+  'dict-data.js?v=9',
+  'dict.js?v=9',
+  'eng-data.js?v=9',
+  'eng.js?v=9',
   'fonts/HarangSans.woff',
   'manifest.webmanifest',
   'icons/icon-192.png',
